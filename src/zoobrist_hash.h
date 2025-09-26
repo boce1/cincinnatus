@@ -9,9 +9,11 @@
 #include "board.h"
 #include "bitboard.h"
 
-#define hashf_exact 0 // hash flag for exact score after evaluation
-#define hashf_alpha 1 // the score is lower than alpha
-#define hashf_beta 2 // the score is higher than beta
+#define HASH_FLAG_EXACT 0 // hash flag for exact FLAG after evaluation
+#define HASH_FLAG_ALPHA 1 // the FLAG is lower than alpha
+#define HASH_FLAG_BETA 2 // the FLAG is higher than beta
+
+#define HASH_SIZE 0x400000 // 4MB hash size
 
 typedef struct {
     uint64_t piece_keys[12][64]; // 12 pieces, 64 squares
@@ -24,12 +26,11 @@ typedef struct {
 
 
 typedef struct {
-    uint64_t key;
-    int depth;
-    int flags;
-    int value;
-    int best;
-} hash_node;
+    uint64_t key; // unique position identifier
+    int depth; // depth of the search when the entry was stored
+    int flag; // type of the hash entry (exact, alpha, beta)
+    int score; // evaluation score
+} tag_hash;
 
 #define copy_board_hash_key(hash_keys) \
     uint64_t board_hash_key_copy = (hash_keys)->board_hash_key; \
@@ -44,5 +45,8 @@ uint64_t generate_board_hash_key(Board* board, zoobrist_hash_keys* hash_data);
 void init_board_hash_key(Board* board, zoobrist_hash_keys* hash_data);
 
 void print_hash_key(Board* board, zoobrist_hash_keys* hash_data);
+
+tag_hash* create_transposition_table();
+void clear_transposition_table(tag_hash* transposition_table);
 
 #endif // ZOOBRIST_HASH_H

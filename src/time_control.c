@@ -84,9 +84,16 @@ void read_input(time_controls* info) {
 
 // bridge function to interact between the search and GUI
 void communicate(time_controls* info) {
-    if(info->timeset && get_time_ms() > info->stoptime) {
+    if(info->timeset && get_time_ms() > info->stoptime) { // set the stop flag if time is up
         info->stopped = 1;
     }
 
-    read_input(info);
+    read_input(info); // set the stop flag if input is waiting
+                        // input in this case is either "stop" or "quit", in any case stop the search
+
+    /*
+        the engine communicates with the GUI every 2048 nodes
+        if theres input waiting in the stdin buffer it sets the stop flag
+        the search function checks this flag and if its set it returns the best move found so far
+    */
 }

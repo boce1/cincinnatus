@@ -20,9 +20,10 @@ int main() {
     search_heuristics* search_data = NULL;
     time_controls* time_info = NULL;   
     zoobrist_hash_keys* hash_data = NULL;
+    tag_hash* transposition_table = NULL;
 
-    create_data_structures(&leaper_masks, &slider_masks, &board, &search_data, &time_info, &hash_data);
-    init_data_structures(leaper_masks, slider_masks, board, search_data, time_info, hash_data);
+    create_data_structures(&leaper_masks, &slider_masks, &board, &search_data, &time_info, &hash_data, &transposition_table);
+    init_data_structures(leaper_masks, slider_masks, board, search_data, time_info, hash_data, transposition_table);
 
     int debug = 0; // set to 0 to run UCI loop
     if(debug) {
@@ -53,6 +54,6 @@ int main() {
         uci_loop(board, leaper_masks, slider_masks, search_data, time_info, hash_data);
     }
     
-    free_data_structures(leaper_masks, slider_masks, board, search_data, time_info, hash_data);
+    free_data_structures(leaper_masks, slider_masks, board, search_data, time_info, hash_data, transposition_table);
     return 0;
 }

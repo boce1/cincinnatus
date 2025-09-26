@@ -8,8 +8,8 @@ BIN_DIR  = bin
 
 # Sources and executables
 SRC       = $(wildcard $(SRC_DIR)/*.c)
-EXEC_LIN  = $(BIN_DIR)/bitboard_chess_linux
-EXEC_WIN  = $(BIN_DIR)/bitboard_chess_windows
+EXEC_LIN  = $(BIN_DIR)/cincinnatus_linux
+EXEC_WIN  = $(BIN_DIR)/cincinnatus_windows
 
 # Compiler flags
 CFLAGS_DEBUG   = -Wall -Wextra

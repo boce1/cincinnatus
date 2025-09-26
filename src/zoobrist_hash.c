@@ -63,3 +63,24 @@ void print_hash_key(Board* board, zoobrist_hash_keys* hash_data) {
     uint64_t hash_key = generate_board_hash_key(board, hash_data);
     printf("Hash key: %" PRIu64 "\n", hash_key);
 }
+
+tag_hash* create_transposition_table() {
+    tag_hash* transposition_table = (tag_hash*)malloc(HASH_SIZE * sizeof(tag_hash));
+    // if (!transposition_table) {
+    //     fprintf(stderr, "Memory allocation failed for hash table\n");
+    //     exit(EXIT_FAILURE);
+    // }
+    // Initialize the hash table entries to zero
+    clear_transposition_table(transposition_table);
+    return transposition_table;
+}
+void clear_transposition_table(tag_hash* transposition_table) {
+    if (transposition_table) {
+        for(int i = 0; i < HASH_SIZE; i++) {
+            transposition_table[i].key = 0;
+            transposition_table[i].depth = 0;
+            transposition_table[i].flag = 0;
+            transposition_table[i].score = 0;
+        }
+    }
+}

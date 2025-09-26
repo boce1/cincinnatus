@@ -88,6 +88,12 @@ void parse_position(char* command, Board* board, leaper_moves_masks* leaper_mask
     print_board(board);
 }
 
+/*
+if the GUI doesn't send any time controls,
+the engine will do infinity search until stopped by the GUI
+or until it finds a checkmate
+or until the max depht wich is 64 plies
+*/
 
 void parse_go(char* command, Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, search_heuristics* search_data, time_controls* time_info, zoobrist_hash_keys* hash_keys) {
     int depth = -1;
@@ -159,19 +165,14 @@ void parse_go(char* command, Board* board, leaper_moves_masks* leaper_masks, sli
     search_position(depth, board, leaper_masks, slider_masks, search_data, time_info, hash_keys);
 }
 
-/*
-start
-GUI - isready
-Engine - readyok
-GUI - ucinewgame
-*/
+
 void uci_loop(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, search_heuristics* search_data, time_controls* time_info, zoobrist_hash_keys* hash_keys) {
     setbuf(stdin, NULL);
     setbuf(stdout, NULL);
 
     char input[2000];
 
-    printf("id name Engine\n");
+    printf("id name cincinnatus\n");
     printf("id name Boyan\n");
     printf("uciok\n");
 
@@ -206,7 +207,7 @@ void uci_loop(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks
         }
         else if(strncmp(input, "uci", 3) == 0) {
             // testing if the engine supports uci protocol
-            printf("id name Engine\n");
+            printf("id name cincinnatus\n");
             printf("id name Boyan\n");
             printf("uciok\n");
         }

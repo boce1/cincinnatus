@@ -79,8 +79,24 @@ typedef struct {
     int killer_moves[2][MAX_PLY];
     int history_moves[12][64]; // [piece][sqaure]
     long nodes;
-
 } search_heuristics;
+
+/*
+  follow_pv is the flag that indicates whether the current search is following the principle variation line,
+  it resets to 0 when a non-pv move is being searched,
+
+  score_pv is the flag that if the searced moved is pv move (it is in the pv_table), 
+  That move is ussually the best and thats why its being searched first,
+  it is used for move ordering
+
+  At the start of move generation at a node, 
+  if follow_pv is set, enable_pv_scoring is called, 
+  which sets score_pv if the PV move is present.
+  In score_move, if score_pv is set and the move matches the PV move, 
+  it scores it the highest and then set score_pv = 0 so only the first match gets the bonus.
+  Using follow_pv and score_pv is the common practical patter in chess engines fore clarity and control.
+  
+*/
 
 search_heuristics* create_search_heuristics();
 void init_search_heuristics(search_heuristics* search_data);

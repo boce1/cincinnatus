@@ -78,8 +78,8 @@ There's executables in ```bin``` folder.
 ### Compile
 Clone the repo
 ```bash
-git clone https://github.com/boce1/bitboard-chess.git
-cd bitboard-chess
+git clone https://github.com/boce1/cincinnatus.git
+cd cincinnatus
 ```
 
 To run the "release" version of the chess bot
