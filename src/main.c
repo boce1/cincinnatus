@@ -25,7 +25,7 @@ int main() {
     create_data_structures(&leaper_masks, &slider_masks, &board, &search_data, &time_info, &hash_data, &transposition_table);
     init_data_structures(leaper_masks, slider_masks, board, search_data, time_info, hash_data, transposition_table);
 
-    int debug = 0; // set to 0 to run UCI loop
+    int debug = 1; // set to 0 to run UCI loop
     if(debug) {
 
         parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -", board);
@@ -34,22 +34,10 @@ int main() {
         init_board_hash_key(board, hash_data);
         print_board(board);
         
-        // print_hash_key(board, hash_data);
-        // printf("Board hash key: %" PRIu64 "\n", hash_data->board_hash_key);
-        perft_test(4, board, leaper_masks, slider_masks, hash_data);
-        //print_hash_key(board, hash_data);
-
-        //search_position(6, board, leaper_masks, slider_masks, search_data, time_info);
-        //Moves mv[1];
-        //init_move_list(mv);
-        //generate_moves(board, leaper_masks, slider_masks, mv);
-//
-        //sort_moves(mv, board, search_data);
-        //print_move_scores(mv, board, search_data);        
-        //printf("score %d\n", evaluate(board));
-
-        // 7986424829486667136
-        // 7986424829486667136
+        write_hash_entry(transposition_table, hash_data, 6, 5, HASH_FLAG_BETA);
+        int score = read_hash_entry(transposition_table, hash_data, 5, 15, 5);
+        printf("Hash score: %d\n", score);
+        
     } else {
         uci_loop(board, leaper_masks, slider_masks, search_data, time_info, hash_data);
     }

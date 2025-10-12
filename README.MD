@@ -57,6 +57,10 @@ This project also follows the tutorial series from Richard Albert (BluefeverSoft
 - https://web.archive.org/web/20071031095933/http://www.brucemo.com/compchess/programming/nullmove.htm
 12. Window Aspiration by Bruce Moreland
 - https://web.archive.org/web/20071031095918/http://www.brucemo.com/compchess/programming/aspiration.htm
+13. Transposition table - Bruce Moreland
+- https://web.archive.org/web/20071031100051/http://www.brucemo.com/compchess/programming/hashing.htm
+14.  Exploring modern chess engine architectures - Bechlor Thesis - Pieter Bijl, Anh Phi Tiet 
+- https://www.cs.vu.nl/~wanf/theses/bijl-tiet-bscthesis.pdf
 
 # Running the engine
 This engine works with UCI protocol and every GUI that supports UCI can start the bot. The most popular GUI for chess engines are:

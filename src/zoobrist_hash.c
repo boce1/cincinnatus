@@ -2,17 +2,10 @@
 
 zoobrist_hash_keys* create_zoobrist_hash_keys() {
     zoobrist_hash_keys* hash_data = (zoobrist_hash_keys*)malloc(sizeof(zoobrist_hash_keys));
-    // if (!hash_data) {
-    //     fprintf(stderr, "Memory allocation failed for zoobrist_hash_keys\n");
-    //     exit(EXIT_FAILURE);
-    // }
     return hash_data;
 }
 
 void init_zoobrist_random_keys(zoobrist_hash_keys* hash_data) {
-    // The seed is the random_state variable from magic_numbers.c
-    // function for getting the random u64 ints are also from magic_numbers.c
-
     for (int piece = P; piece <= k; piece++) {
         for (int square = 0; square < 64; square++) {
             hash_data->piece_keys[piece][square] = get_random_uint64_t();
@@ -66,10 +59,6 @@ void print_hash_key(Board* board, zoobrist_hash_keys* hash_data) {
 
 tag_hash* create_transposition_table() {
     tag_hash* transposition_table = (tag_hash*)malloc(HASH_SIZE * sizeof(tag_hash));
-    // if (!transposition_table) {
-    //     fprintf(stderr, "Memory allocation failed for hash table\n");
-    //     exit(EXIT_FAILURE);
-    // }
     // Initialize the hash table entries to zero
     clear_transposition_table(transposition_table);
     return transposition_table;
@@ -83,4 +72,39 @@ void clear_transposition_table(tag_hash* transposition_table) {
             transposition_table[i].score = 0;
         }
     }
+}
+
+int read_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data, int alpha, int beta, int depth) {
+    /*
+    Check if there is a valid hash entry for the current position
+    If found and the stored depth is sufficient, use the entry to return a score or bound
+    Return NO_HASH_ENTRY if no valid entry is found
+
+    If the entrys flag is HASH_FLAG_EXACT, return the exact score
+    If the entrys flag is outside the alpha-beta window, return the bound, IT MEANS THIS NODE CAN BE PRUNED
+    ALPHA-BETA WINDOWS IS alpha < score < beta
+    */
+    tag_hash* entry = &transposition_table[hash_data->board_hash_key % HASH_SIZE];
+    if(entry->key == hash_data->board_hash_key) {
+        if(entry->depth >= depth) {
+            if(entry->flag == HASH_FLAG_EXACT) {
+                return entry->score;
+            }
+            if(entry->flag == HASH_FLAG_ALPHA && entry->score <= alpha) {
+                return alpha;
+            }
+            if(entry->flag == HASH_FLAG_BETA && entry->score >= beta) {
+                return beta;
+            }
+        }
+    }
+    return NO_HASH_ENTRY; // no valid entry found
+}
+
+void write_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data, int score, int depth, int hash_flag) {
+    tag_hash* entry = &transposition_table[hash_data->board_hash_key % HASH_SIZE];
+    entry->key = hash_data->board_hash_key;
+    entry->depth = depth;
+    entry->flag = hash_flag;
+    entry->score = score;
 }

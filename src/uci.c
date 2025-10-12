@@ -148,6 +148,14 @@ void parse_go(char* command, Board* board, leaper_moves_masks* leaper_masks, sli
         
         // "illegal" (empty) move bug fix
         if (time_info->time > 1500) time_info->time -= 50;
+        /*
+            Engines dont want to use 100% of the remaining time, because small inaccuracies in timing or delays in processing could make the engine run out of time before it makes a move.
+            Subtracting 50 ms ensures the engine stops slightly before the absolute limit.
+
+            Engines at the beggining use more time to think at the beggining of the game, because the position is more complex
+            and early mistakes cost more. Remaining time at the beggining is large and uci tells the engine to excptect 40 moves to be played with movestogo.
+            So the engine can use more time to think at the beggining of the game.
+        */
         
         // init stoptime
         time_info->stoptime = time_info->starttime + time_info->time + time_info->inc;

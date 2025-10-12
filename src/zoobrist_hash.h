@@ -9,9 +9,12 @@
 #include "board.h"
 #include "bitboard.h"
 
-#define HASH_FLAG_EXACT 0 // hash flag for exact FLAG after evaluation
-#define HASH_FLAG_ALPHA 1 // the FLAG is lower than alpha
-#define HASH_FLAG_BETA 2 // the FLAG is higher than beta
+#define HASH_FLAG_EXACT 0 // hash position if it is in window search
+#define HASH_FLAG_ALPHA 1 // hash it and mark it as alpha
+#define HASH_FLAG_BETA 2 // hash it and mark it as beta
+
+// no hash entry found constant, that is higher than any possible score
+#define NO_HASH_ENTRY 100000 
 
 #define HASH_SIZE 0x400000 // 4MB hash size
 
@@ -29,7 +32,7 @@ typedef struct {
     uint64_t key; // unique position identifier
     int depth; // depth of the search when the entry was stored
     int flag; // type of the hash entry (exact, alpha, beta)
-    int score; // evaluation score
+    int score; // evaluation score (exact score or alpha/beta bound)
 } tag_hash;
 
 #define copy_board_hash_key(hash_keys) \
@@ -48,5 +51,8 @@ void print_hash_key(Board* board, zoobrist_hash_keys* hash_data);
 
 tag_hash* create_transposition_table();
 void clear_transposition_table(tag_hash* transposition_table);
+
+int read_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data, int alpha, int beta, int depth);
+void write_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data, int score, int depth, int hash_flag);
 
 #endif // ZOOBRIST_HASH_H
