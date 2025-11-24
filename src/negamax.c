@@ -355,10 +355,17 @@ int quiescence(Board* board, leaper_moves_masks* leaper_masks, slider_moves_mask
     return alpha;
 }
 
-int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, search_heuristics* search_data, time_controls* time_info, zoobrist_hash_keys* hash_keys, int alpha, int beta, int depth) {
+int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, search_heuristics* search_data, time_controls* time_info, zoobrist_hash_keys* hash_keys, tag_hash* transposition_table, int alpha, int beta, int depth) {
     int score;
     int moves_searched = 0; // moves seaarch in the move list 
     
+    int hash_flag = HASH_FLAG_ALPHA; // default flag to alpha
+    if((score = read_hash_entry(transposition_table, hash_keys, alpha, beta, depth)) != NO_HASH_ENTRY) {
+        // if the move is found in the hash table, return the score
+        // return the score without searching further
+        return score;
+    }
+
     search_data->pv_lenght[search_data->ply] = search_data->ply;
     
     if((search_data->nodes & 2047) == 0) { // check every 2048 nodes for time up
@@ -404,7 +411,9 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
         copy_board_hash_key(hash_keys);
         board->side_to_move ^= 1; // switch side to move
         board->en_passant_square = no_square; // cant do en passant after null move
-        score = -negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, -beta, -beta + 1, depth - REDUCTION - 1);
+        hash_keys->board_hash_key ^= hash_keys->side_key; // update hash key for side to move change
+        hash_keys->board_hash_key ^= hash_keys->en_passant_keys[board->en_passant_square];
+        score = -negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, -beta, -beta + 1, depth - REDUCTION - 1);
         take_back(board);
         take_back_board_hash_key(hash_keys);
 
@@ -438,21 +447,21 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
         legal_moves++;
 
         if(moves_searched == 0) { // use full window for PV MOVE
-            score = -negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, -beta, -alpha, depth-1);
+            score = -negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, -beta, -alpha, depth-1);
         } else { // LMR for non PV moves
             if(moves_searched >= FULL_DEPTH_MOVE && depth >= REDUCED_DEPTH_MOVE 
                 && in_check == 0 
                 && get_move_capture(move_list->moves[count]) == 0 
                 && get_move_promoted(move_list->moves[count]) == 0) {
-                score = -negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, -alpha -1, -alpha, depth - 2);
+                score = -negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, -alpha -1, -alpha, depth - 2);
             } else {
                 score = alpha + 1; // set score to be higher than alpha to enter the if condition below
             }
 
             if(score > alpha) { // if LMR fails, search at normal depth and kept the score bandwidth
-                score = -negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys,-alpha - 1, -alpha, depth-1);
+                score = -negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, -alpha - 1, -alpha, depth-1);
                 if(score > alpha && score < beta) { // if the move is good, search with full window and normal depth
-                    score = -negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, -beta, -alpha, depth-1);
+                    score = -negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, -beta, -alpha, depth-1);
                 }
             }
         }
@@ -469,6 +478,8 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
         moves_searched++;
 
         if(score >= beta) {
+            write_hash_entry(transposition_table, hash_keys, beta, depth, HASH_FLAG_BETA);
+
             if(get_move_capture(move_list->moves[count]) == 0) {
                 search_data->killer_moves[1][search_data->ply] = search_data->killer_moves[0][search_data->ply];
                 search_data->killer_moves[0][search_data->ply] = move_list->moves[count];
@@ -479,6 +490,8 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
         }
 
         if(score > alpha) {
+            hash_flag = HASH_FLAG_EXACT;
+
             if(get_move_capture(move_list->moves[count]) == 0) {
                 search_data->history_moves[get_move_piece(move_list->moves[count])][get_move_target(move_list->moves[count])] += depth;
             }
@@ -506,6 +519,7 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
             return 0;
         }
     }
+    write_hash_entry(transposition_table, hash_keys, alpha, depth, hash_flag); // store hash entry with exact score or alpha score
 
     return alpha;
 }

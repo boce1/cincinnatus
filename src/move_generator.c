@@ -551,7 +551,7 @@ int make_move(Board* board, int move, int move_flag, leaper_moves_masks* leaper_
         // DEBUGGING HASH KEY
         // uint64_t current_hash_key = generate_board_hash_key(board, hash_keys);
         // if(hash_keys->board_hash_key != current_hash_key) {
-        //     printf("Make move\n");
+        //     printf("Make move testing hash\n");
         //     print_move(move);
         //     print_board(board);
         //     printf("Board hash key: %" PRIu64 "\n", hash_keys->board_hash_key);
