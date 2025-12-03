@@ -242,7 +242,7 @@ void search_position(int depth, Board* board, leaper_moves_masks* leaper_masks, 
         int score = negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, alpha, beta, current_depth);      
 
         // window aspiration
-        if(score <= ALPHA || score >= BETA) {
+        if(score <= alpha || score >= beta) {
             alpha = ALPHA;
             beta = BETA;
             continue;

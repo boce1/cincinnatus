@@ -311,7 +311,9 @@ int quiescence(Board* board, leaper_moves_masks* leaper_masks, slider_moves_mask
     if((search_data->nodes & 2047) == 0) { // check every 2048 nodes for time up
         communicate(time_info);
     }
-    
+    if(search_data->ply >= MAX_PLY) {
+        return evaluate(board);
+    }
     search_data->nodes++; 
     
     int eval = evaluate(board);
@@ -360,10 +362,10 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
     int moves_searched = 0; // moves seaarch in the move list 
     
     int hash_flag = HASH_FLAG_ALPHA; // default flag to alpha
-    if((score = read_hash_entry(transposition_table, hash_keys, alpha, beta, depth)) != NO_HASH_ENTRY) {
+    if(search_data->ply && (score = read_hash_entry(transposition_table, hash_keys, alpha, beta, depth)) != NO_HASH_ENTRY) {
         // if the move is found in the hash table, return the score
         // return the score without searching further
-        return score;
+            return score;
     }
 
     search_data->pv_lenght[search_data->ply] = search_data->ply;
@@ -381,7 +383,7 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
     }
 
     search_data->nodes++; // will be used later to reduced search space
-    int legal_moves = 0;
+    int legal_moves = 0; // for checkmate and stalemate detection
 
     int in_check = 0;
     int king_pos;
@@ -409,11 +411,17 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
     if(depth >= REDUCTION + 1 && in_check == 0 && search_data->ply) { // dont do null move pruning if in check or at root node
         copy_board(board);
         copy_board_hash_key(hash_keys);
+        search_data->ply++;
+        if(board->en_passant_square != no_square) {
+            hash_keys->board_hash_key ^= hash_keys->en_passant_keys[board->en_passant_square];
+        }
         board->side_to_move ^= 1; // switch side to move
-        board->en_passant_square = no_square; // cant do en passant after null move
         hash_keys->board_hash_key ^= hash_keys->side_key; // update hash key for side to move change
-        hash_keys->board_hash_key ^= hash_keys->en_passant_keys[board->en_passant_square];
+        board->en_passant_square = no_square; // cant do en passant after null move
+
         score = -negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, -beta, -beta + 1, depth - REDUCTION - 1);
+        
+        search_data->ply--;
         take_back(board);
         take_back_board_hash_key(hash_keys);
 

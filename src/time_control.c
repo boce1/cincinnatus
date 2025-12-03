@@ -74,7 +74,7 @@ void read_input(time_controls* info) {
 		info->stopped = 1;
 		do {
 		  bytes=read(fileno(stdin),input,256);
-		} while (bytes<0);
+		} while (bytes<0); // This code ensures the engine eats the input from the buffer so the next check doesn’t read old data.
 		endc = strchr(input,'\n');
 		if (endc) *endc=0;
 
