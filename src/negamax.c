@@ -362,7 +362,7 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
     int moves_searched = 0; // moves seaarch in the move list 
     
     int hash_flag = HASH_FLAG_ALPHA; // default flag to alpha
-    if(search_data->ply && (score = read_hash_entry(transposition_table, hash_keys, alpha, beta, depth)) != NO_HASH_ENTRY) {
+    if(search_data->follow_pv && (score = read_hash_entry(transposition_table, hash_keys, search_data, alpha, beta, depth)) != NO_HASH_ENTRY) {
         // if the move is found in the hash table, return the score
         // return the score without searching further
             return score;
@@ -486,7 +486,7 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
         moves_searched++;
 
         if(score >= beta) {
-            write_hash_entry(transposition_table, hash_keys, beta, depth, HASH_FLAG_BETA);
+            write_hash_entry(transposition_table, hash_keys, search_data, beta, depth, HASH_FLAG_BETA);
 
             if(get_move_capture(move_list->moves[count]) == 0) {
                 search_data->killer_moves[1][search_data->ply] = search_data->killer_moves[0][search_data->ply];
@@ -521,13 +521,13 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
 
     if(legal_moves == 0) {
         if(in_check) { // mating score assuming closest distance to mating position
-            return ALPHA + 1 + search_data->ply;
+            return -MATE_VALUE + search_data->ply; // +ply for mate in how many moves
         } else {
             // stalemate
             return 0;
         }
     }
-    write_hash_entry(transposition_table, hash_keys, alpha, depth, hash_flag); // store hash entry with exact score or alpha score
+    write_hash_entry(transposition_table, hash_keys, search_data, alpha, depth, hash_flag); // store hash entry with exact score or alpha score
 
     return alpha;
 }

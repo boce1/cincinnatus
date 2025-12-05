@@ -74,7 +74,7 @@ void clear_transposition_table(tag_hash* transposition_table) {
     }
 }
 
-int read_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data, int alpha, int beta, int depth) {
+int read_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data, search_heuristics* search_data, int alpha, int beta, int depth) {
     /*
     Check if there is a valid hash entry for the current position
     If found and the stored depth is sufficient, use the entry to return a score or bound
@@ -87,13 +87,21 @@ int read_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data
     tag_hash* entry = &transposition_table[hash_data->board_hash_key % HASH_SIZE];
     if(entry->key == hash_data->board_hash_key) {
         if(entry->depth >= depth) {
-            if(entry->flag == HASH_FLAG_EXACT) {
-                return entry->score;
+            int score = entry->score;
+            // adjust mate scores based on ply
+            if(score < -LOWER_BOUND_MATE_SCORE) {
+                score += search_data->ply; 
+            } else if(score > LOWER_BOUND_MATE_SCORE) {
+                score -= search_data->ply; 
             }
-            if(entry->flag == HASH_FLAG_ALPHA && entry->score <= alpha) {
+
+            if(entry->flag == HASH_FLAG_EXACT) {
+                return score;
+            }
+            if(entry->flag == HASH_FLAG_ALPHA && score <= alpha) {
                 return alpha;
             }
-            if(entry->flag == HASH_FLAG_BETA && entry->score >= beta) {
+            if(entry->flag == HASH_FLAG_BETA && score >= beta) {
                 return beta;
             }
         }
@@ -101,8 +109,15 @@ int read_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data
     return NO_HASH_ENTRY; // no valid entry found
 }
 
-void write_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data, int score, int depth, int hash_flag) {
+void write_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data, search_heuristics* search_data, int score, int depth, int hash_flag) {
     tag_hash* entry = &transposition_table[hash_data->board_hash_key % HASH_SIZE];
+    
+    if(score < -LOWER_BOUND_MATE_SCORE) {
+        score -= search_data->ply; 
+    } else if(score > LOWER_BOUND_MATE_SCORE) {
+        score += search_data->ply; 
+    }
+
     entry->key = hash_data->board_hash_key;
     entry->depth = depth;
     entry->flag = hash_flag;

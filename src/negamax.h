@@ -26,7 +26,7 @@ extern const int mirror_score[128];
 #define KILLER_MOVE_SCORE_2 8000
 #define CAPTURE_MOVE_SCORE 10000
 #define PV_MOVE_SCORE 20000
-#define MAX_PLY 64
+
 
 #define FULL_DEPTH_MOVE 4
 #define REDUCED_DEPTH_MOVE 3
@@ -70,16 +70,7 @@ extern const int mirror_score[128];
     when the ply is 2 negamax must be able to find g1f3, b8c6, f1b5
 */
 
-typedef struct {
-    int ply;
-    int follow_pv; // if the current principle variation line is followed
-    int score_pv;
-    int pv_lenght[MAX_PLY]; // stores the ply where the PV nodes end
-    int pv_table[MAX_PLY][MAX_PLY];
-    int killer_moves[2][MAX_PLY];
-    int history_moves[12][64]; // [piece][sqaure]
-    long nodes;
-} search_heuristics;
+
 
 /*
   follow_pv is the flag that indicates whether the current search is following the principle variation line,

@@ -27,6 +27,20 @@ typedef struct {
     uint64_t board_hash_key; // current board hash key, it is not random, represents id of the current position
 } zoobrist_hash_keys;
 
+#define MAX_PLY 64
+#define MATE_VALUE 49000
+#define LOWER_BOUND_MATE_SCORE 48000
+
+typedef struct {
+    int ply;
+    int follow_pv; // if the current principle variation line is followed
+    int score_pv;
+    int pv_lenght[MAX_PLY]; // stores the ply where the PV nodes end
+    int pv_table[MAX_PLY][MAX_PLY];
+    int killer_moves[2][MAX_PLY];
+    int history_moves[12][64]; // [piece][sqaure]
+    long nodes;
+} search_heuristics;
 
 typedef struct {
     uint64_t key; // unique position identifier
@@ -52,7 +66,7 @@ void print_hash_key(Board* board, zoobrist_hash_keys* hash_data);
 tag_hash* create_transposition_table();
 void clear_transposition_table(tag_hash* transposition_table);
 
-int read_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data, int alpha, int beta, int depth);
-void write_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data, int score, int depth, int hash_flag);
+int read_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data, search_heuristics* search_data, int alpha, int beta, int depth);
+void write_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data, search_heuristics* search_data, int score, int depth, int hash_flag);
 
 #endif // ZOOBRIST_HASH_H
