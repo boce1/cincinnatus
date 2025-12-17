@@ -362,7 +362,11 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
     int moves_searched = 0; // moves seaarch in the move list 
     
     int hash_flag = HASH_FLAG_ALPHA; // default flag to alpha
-    if(search_data->follow_pv && (score = read_hash_entry(transposition_table, hash_keys, search_data, alpha, beta, depth)) != NO_HASH_ENTRY) {
+    int pv_node = (beta - alpha) > 1;
+    if(search_data->ply && 
+        (score = read_hash_entry(transposition_table, hash_keys, search_data, alpha, beta, depth)) != NO_HASH_ENTRY &&
+        !pv_node) {
+        // if the move is not in the principal variation 
         // if the move is found in the hash table, return the score
         // return the score without searching further
             return score;

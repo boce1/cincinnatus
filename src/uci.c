@@ -201,11 +201,11 @@ void uci_loop(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks
         }
         else if(strncmp(input, "position", 8) == 0) {
             parse_position(input, board, leaper_masks, slider_masks, hash_keys);
-            // init_board_hash_key(board, hash_keys);
+            clear_transposition_table(transposition_table);
         }
         else if(strncmp(input, "ucinewgame", 10) == 0) {
             parse_position("position startpos", board, leaper_masks, slider_masks, hash_keys);
-            // init_board_hash_key(board, hash_keys);
+            clear_transposition_table(transposition_table);
         }
         else if(strncmp(input, "go", 2) == 0) {
             parse_go(input, board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table);
