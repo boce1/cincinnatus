@@ -123,3 +123,22 @@ void write_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_da
     entry->flag = hash_flag;
     entry->score = score;
 }
+
+repetition_data* create_repetition_table() {
+    repetition_data* repetition_table = (repetition_data*)malloc(sizeof(repetition_data));
+    return repetition_table;
+}
+
+void init_repetition_table(repetition_data* repetition_table) {
+    memset(repetition_table->keys, 0, sizeof(repetition_table->keys));
+    repetition_table->index = 0;
+}
+
+int check_repetition(repetition_data* repetition_table, zoobrist_hash_keys* hash_data) {
+    for(int i = 0; i < repetition_table->index; i++) {
+        if(repetition_table->keys[i] == hash_data->board_hash_key) {
+            return 1; // repetition found
+        }
+    }
+    return 0; // no repetition
+}

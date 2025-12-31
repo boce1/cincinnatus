@@ -1,64 +1,82 @@
 #include "memory_man.h"
 
-void create_data_structures(leaper_moves_masks** leaper_masks, slider_moves_masks** slider_masks, Board** board, search_heuristics** search_data, time_controls** time_info, zoobrist_hash_keys** hash_data, tag_hash** transposition_table) {
+void create_data_structures(leaper_moves_masks** leaper_masks, slider_moves_masks** slider_masks, 
+    Board** board, search_heuristics** search_data, time_controls** time_info, 
+    zoobrist_hash_keys** hash_data, tag_hash** transposition_table, repetition_data** repetition_table) {
     *leaper_masks = create_leaper_moves_masks(); // pawn, knight, king masks
-    if(!leaper_masks) {
+    if(!*leaper_masks) {
         fprintf(stderr, "Failed to allocate memory for leaper moves masks\n");
         exit(EXIT_FAILURE);
     }
     *slider_masks = create_slider_moves_masks(); // rook, bishop, queen masks4110-+
-    if(!slider_masks) {
-        free(leaper_masks);
+    if(!*slider_masks) {
+        free(*leaper_masks);
         fprintf(stderr, "Failed to allocate memory for slider moves masks\n");
         exit(EXIT_FAILURE);
     }
     *board = create_board();
-    if(!board) {
-        free(leaper_masks);
-        free(slider_masks);
+    if(!*board) {
+        free(*leaper_masks);
+        free(*slider_masks);
         fprintf(stderr, "Failed to allocate memory for board\n");
         exit(EXIT_FAILURE);
     }
     *search_data = create_search_heuristics();
-    if(!search_data) {
-        free(leaper_masks);
-        free(slider_masks);
-        free(board);
+    if(!*search_data) {
+        free(*leaper_masks);
+        free(*slider_masks);
+        free(*board);
         fprintf(stderr, "Failed to allocate memory for search heuristics\n");
         exit(EXIT_FAILURE);
     }
     *time_info = create_time_controls();
-    if(!time_info) {
-        free(leaper_masks);
-        free(slider_masks);
-        free(board);
-        free(search_data);
+    if(!*time_info) {
+        free(*leaper_masks);
+        free(*slider_masks);
+        free(*board);
+        free(*search_data);
         fprintf(stderr, "Failed to allocate memory for time controls\n");
         exit(EXIT_FAILURE);
     }
     *hash_data = create_zoobrist_hash_keys();
-    if(!hash_data) {
-        free(leaper_masks);
-        free(slider_masks);
-        free(board);
-        free(search_data);
-        free(time_info);
+    if(!*hash_data) {
+        free(*leaper_masks);
+        free(*slider_masks);
+        free(*board);
+        free(*search_data);
+        free(*time_info);
         fprintf(stderr, "Failed to allocate memory for Zobrist hash keys\n");
         exit(EXIT_FAILURE);
     }
     *transposition_table = create_transposition_table();
-    if(!transposition_table) {
-        free(leaper_masks);
-        free(slider_masks);
-        free(board);
-        free(search_data);
-        free(time_info);
-        free(hash_data);
+    if(!*transposition_table) {
+        free(*leaper_masks);
+        free(*slider_masks);
+        free(*board);
+        free(*search_data);
+        free(*time_info);
+        free(*hash_data);
         fprintf(stderr, "Failed to allocate memory for transposition table\n");
         exit(EXIT_FAILURE);
     }
+    *repetition_table = create_repetition_table();
+    if(!*repetition_table) {
+        free(*leaper_masks);
+        free(*slider_masks);
+        free(*board);
+        free(*search_data);
+        free(*time_info);
+        free(*hash_data);
+        free(*transposition_table);
+        fprintf(stderr, "Failed to allocate memory for repetition table\n");
+        exit(EXIT_FAILURE);
+    }
 }
-void free_data_structures(leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, Board* board, search_heuristics* search_data, time_controls* time_info, zoobrist_hash_keys* hash_data, tag_hash* transposition_table) {
+
+
+void free_data_structures(leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, 
+    Board* board, search_heuristics* search_data, time_controls* time_info, 
+    zoobrist_hash_keys* hash_data, tag_hash* transposition_table, repetition_data* repetition_table) {
     if(board != NULL) {
         free(board); 
     }
@@ -81,8 +99,14 @@ void free_data_structures(leaper_moves_masks* leaper_masks, slider_moves_masks* 
         clear_transposition_table(transposition_table);
         free(transposition_table);
     }
+    if(repetition_table != NULL) {
+        free(repetition_table);
+    }
 }
-void init_data_structures(leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, Board* board, search_heuristics* search_data, time_controls* time_info, zoobrist_hash_keys* hash_data, tag_hash* transposition_table) {
+
+void init_data_structures(leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, 
+    Board* board, search_heuristics* search_data, time_controls* time_info, 
+    zoobrist_hash_keys* hash_data, tag_hash* transposition_table, repetition_data* repetition_table) {
     init_leaper_moves_masks(leaper_masks);
     init_slider_moves_masks(slider_masks);
     init_board(board);
@@ -90,4 +114,5 @@ void init_data_structures(leaper_moves_masks* leaper_masks, slider_moves_masks* 
     init_time_controls(time_info);
     init_zoobrist_random_keys(hash_data);
     clear_transposition_table(transposition_table);
+    init_repetition_table(repetition_table);
 }

@@ -17,6 +17,10 @@
 #define NO_HASH_ENTRY 100000 
 
 #define HASH_SIZE 0x400000 // 4MB hash size
+// Hex: 1 0 0 0 0 0
+// Binary: 0001 0000 0000 0000 0000 0000 = 2^20
+// 2^10 = 1024 bytes = 1 KB
+// 2^10 * 1KB = 1024 * 1KB = 1 MB
 
 typedef struct {
     uint64_t piece_keys[12][64]; // 12 pieces, 64 squares
@@ -49,6 +53,11 @@ typedef struct {
     int score; // evaluation score (exact score or alpha/beta bound)
 } tag_hash;
 
+typedef struct {
+    uint64_t keys[200]; // stores hash keys for each ply
+    int index; // current ply in the game
+} repetition_data;
+
 #define copy_board_hash_key(hash_keys) \
     uint64_t board_hash_key_copy = (hash_keys)->board_hash_key; \
 
@@ -68,5 +77,9 @@ void clear_transposition_table(tag_hash* transposition_table);
 
 int read_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data, search_heuristics* search_data, int alpha, int beta, int depth);
 void write_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data, search_heuristics* search_data, int score, int depth, int hash_flag);
+
+repetition_data* create_repetition_table(); // repetition table has size of MAX_PLY
+void init_repetition_table(repetition_data* repetition_data);
+int check_repetition(repetition_data* repetition_table, zoobrist_hash_keys* hash_data);
 
 #endif // ZOOBRIST_HASH_H
