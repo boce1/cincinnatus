@@ -15,6 +15,7 @@
 - [**Null move pruning**](#null-move-pruning) - Improves the performance
 - [**Iterative deepening**](#iterative-deepeningd) - Give the best move so far in the tree if engine runs out of time
 - [**Zoobrist hashing**](#zoobrist-hashing) - Giving the "IDs" to the board positions
+- [**3 fold repetition**](#3-fold-repetition) - if the moves are about to be repeated return draw score for negamax ad quesience search
 
 ## References
 1. Youtube tutorials and Github repos
@@ -222,7 +223,43 @@ Engines store two killer moves per depth because:
 Fen is standard notation for discribing the board. The rows are devided with "/", white pieces are represented as capital letters K - King, Q - Queen, B - Bishop, N - Kning, R - Rook, P - Pawn. For black pieces is the same except they are represented with lowercase letters. Empty square are represented with positive integer number wich tells how many consecutive empty square is there on the row. For more detail check the [FEN link in the reference section](#references).
 
 # PV search
-The main idea behind [Principal Variation Search](#references) searching the PV nodes with full window search. Other nodes are being search with reduced window search. In the case that the move gives the score in alpha-beta region it mean that it hasnt failed low or failed high, wich mean the move might have been good. In that case that move is being search with full window search.
+The main idea behind [Principal Variation Search](#references) searching the PV nodes with full window search. Other nodes are being search with reduced window search. In the case that the move gives the score in alpha-beta region it means that it hasnt failed low or failed high, wich mean the move might have been good. In that case that move is being search with full window search.
+
+It's implemented in ```search_heuristics``` data scructure in ```zoobrist_hash.c```. Its a 2D table that stores the moves in triangle. When negamax or quesience search get to the last recursion layer it store the pv move in the n-th row and n-th column. When returning in the upper layers in the (n-1)-th row pv move is determined for the board and the pv moves bellow are being copied.
+The search uses a triangular PV table to store the best move sequence (the Principal Variation) found at each ply. As the search moves deeper, the PV line is copied upward to maintain the full sequence from the root.
+
+### PV Storage Visualization
+
+| Start Ply | Ply 0 | Ply 1 | Ply 2 | Ply 3 | Ply 4 |
+| :---: | :---: | :---: | :---: | :---: | :---: |
+| **0** | $m_1$ | $m_2$ | $m_3$ | $m_4$ | $m_5$ |
+| **1** | — | $m_2$ | $m_3$ | $m_4$ | $m_5$ |
+| **2** | — | — | $m_3$ | $m_4$ | $m_5$ |
+| **3** | — | — | — | $m_4$ | $m_5$ |
+| **4** | — | — | — | — | $m_5$ |
+
+### How it works:
+1. **Row Index:** The ply at which the search is currently working.
+2. **Column Index:** The depth of the move in the predicted sequence.
+3. **Copying Logic:** When a move improves Alpha (a "PV-node"), the engine updates the current ply's row by taking the current move and appending the PV line from the next ply (`ply + 1`).
+
+```c
+// the code bellow is in negamax.c in negamax functinon
+
+// at the begginning of negamax 
+search_data->pv_lenght[search_data->ply] = search_data->ply;
+//------------------------------------
+// if better move is found (score > alpha)
+search_data->pv_table[search_data->ply][search_data->ply] = move_list->moves[count];
+// copy move from deeper ply into a current plys line
+for(int next_ply = search_data->ply + 1; next_ply < search_data->pv_lenght[search_data->ply+1]; next_ply++) {
+    search_data->pv_table[search_data->ply][next_ply] = search_data->pv_table[search_data->ply + 1][next_ply];
+
+search_data->pv_lenght[search_data->ply] = search_data->pv_lenght[search_data->ply + 1]; 
+
+}
+```
+
 # PERFT
 [PERFT (Performance Test)](#references) is debbuging function that tells how many leaf nodes move generator gives at the given position at the certain depth. Move generator of this engine passed PERFT. 
 # Late move reduction
@@ -252,3 +289,7 @@ Speciffictly, one of the use cases is checking the cycle repetition. Previous po
 Representation of the board is really compact, because it is represented as 64-bit unsigned ints and that allows storing a large numbers of hashes of the boards.
 
 It is also used for their speed, because updating them is xor-ing the previous position and xor-ing the new position with the current hash, instead of recomputing the board all the time.
+## 3 fold repetition
+In modern GUIs that supports UCI, when move is repetead 3 times GUI sends signal to stop the game and the oppenent wins.
+
+It's implemented with help of zoobrist hashing. When a move is already been visited its written in repetion_data structure that keep track of the index of visited board and the boards themself. If the board is about to repeat even once return draw score of 0.
