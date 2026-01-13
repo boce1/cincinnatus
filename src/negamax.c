@@ -1,107 +1,5 @@
 #include "negamax.h"
 
-const int material_score[12] = {
-    100, // white pawn score
-    300, // white knight score
-    350, // white bishop
-    500, // white rook
-    1000, // white queen
-    10000, // white king
-    -100, // black pawn score
-    -300, // black knight score
-    -350, // black bishop
-    -500, // black rook
-    -1000, // black queen
-    -10000 // black king
-};
-
-const int pawn_score[64] = {
-    90,  90,  90,  90,  90,  90,  90,  90,
-    30,  30,  30,  40,  40,  30,  30,  30,
-    20,  20,  20,  30,  30,  30,  20,  20,
-    10,  10,  10,  20,  20,  10,  10,  10,
-     5,   5,  10,  20,  20,   5,   5,   5,
-     0,   0,   0,   5,   5,   0,   0,   0,
-     0,   0,   0, -10, -10,   0,   0,   0,
-     0,   0,   0,   0,   0,   0,   0,   0
-};
-
-// knight positional score
-const int knight_score[64] = {
-    -5,   0,   0,   0,   0,   0,   0,  -5,
-    -5,   0,   0,  10,  10,   0,   0,  -5,
-    -5,   5,  20,  20,  20,  20,   5,  -5,
-    -5,  10,  20,  30,  30,  20,  10,  -5,
-    -5,  10,  20,  30,  30,  20,  10,  -5,
-    -5,   5,  20,  10,  10,  20,   5,  -5,
-    -5,   0,   0,   0,   0,   0,   0,  -5,
-    -5, -10,   0,   0,   0,   0, -10,  -5
-};
-
-// bishop positional score
-const int bishop_score[64] = {
-     0,   0,   0,   0,   0,   0,   0,   0,
-     0,   0,   0,   0,   0,   0,   0,   0,
-     0,  20,   0,  10,  10,   0,  20,   0,
-     0,   0,  10,  20,  20,  10,   0,   0,
-     0,   0,  10,  20,  20,  10,   0,   0,
-     0,  10,   0,   0,   0,   0,  10,   0,
-     0,  30,   0,   0,   0,   0,  30,   0,
-     0,   0, -10,   0,   0, -10,   0,   0
-};
-
-const int rook_score[64] = {
-    50,  50,  50,  50,  50,  50,  50,  50,
-    50,  50,  50,  50,  50,  50,  50,  50,
-     0,   0,  10,  20,  20,  10,   0,   0,
-     0,   0,  10,  20,  20,  10,   0,   0,
-     0,   0,  10,  20,  20,  10,   0,   0,
-     0,   0,  10,  20,  20,  10,   0,   0,
-     0,   0,  10,  20,  20,  10,   0,   0,
-     0,   0,   0,  20,  20,   0,   0,   0
-
-};
-
-const int king_score[64] = {
-     0,   0,   0,   0,   0,   0,   0,   0,
-     0,   0,   5,   5,   5,   5,   0,   0,
-     0,   5,   5,  10,  10,   5,   5,   0,
-     0,   5,  10,  20,  20,  10,   5,   0,
-     0,   5,  10,  20,  20,  10,   5,   0,
-     0,   0,   5,  10,  10,   5,   0,   0,
-     0,   5,   5,  -5,  -5,   0,   5,   0,
-     0,   0,  10,   0, -15,   0,  15,   0
-};
-
-const int mirror_score[128] = {
-	a1, b1, c1, d1, e1, f1, g1, h1,
-	a2, b2, c2, d2, e2, f2, g2, h2,
-	a3, b3, c3, d3, e3, f3, g3, h3,
-	a4, b4, c4, d4, e4, f4, g4, h4,
-	a5, b5, c5, d5, e5, f5, g5, h5,
-	a6, b6, c6, d6, e6, f6, g6, h6,
-	a7, b7, c7, d7, e7, f7, g7, h7,
-	a8, b8, c8, d8, e8, f8, g8, h8
-};
-
-// MVV LVA [attacker][victim]
-//    P,   N,   B,   R,   Q,   K,    p,   n,   b,   r,   q,   k
-int const mvv_lva[12][12] = {
- 	{105, 205, 305, 405, 505, 605,  105, 205, 305, 405, 505, 605}, // P
-	{104, 204, 304, 404, 504, 604,  104, 204, 304, 404, 504, 604}, // N
-	{103, 203, 303, 403, 503, 603,  103, 203, 303, 403, 503, 603}, // B
-	{102, 202, 302, 402, 502, 602,  102, 202, 302, 402, 502, 602}, // R
-	{101, 201, 301, 401, 501, 601,  101, 201, 301, 401, 501, 601}, // Q
-	{100, 200, 300, 400, 500, 600,  100, 200, 300, 400, 500, 600}, // K
-
-	{105, 205, 305, 405, 505, 605,  105, 205, 305, 405, 505, 605}, // p
-	{104, 204, 304, 404, 504, 604,  104, 204, 304, 404, 504, 604}, // n
-	{103, 203, 303, 403, 503, 603,  103, 203, 303, 403, 503, 603}, // b
-	{102, 202, 302, 402, 502, 602,  102, 202, 302, 402, 502, 602}, // r
-	{101, 201, 301, 401, 501, 601,  101, 201, 301, 401, 501, 601}, // q
-	{100, 200, 300, 400, 500, 600,  100, 200, 300, 400, 500, 600}  // k
-};
-
 search_heuristics* create_search_heuristics() {
     search_heuristics* search_data = (search_heuristics*)malloc(sizeof(search_heuristics));
     // if(!search_data) {
@@ -122,196 +20,12 @@ void init_search_heuristics(search_heuristics* data) {
     memset(data->history_moves, 0, sizeof(data->history_moves));
 }
 
-int score_move(int move, Board* board, search_heuristics* search_data) {
-    if(search_data->score_pv) {
-        if(search_data->pv_table[0][search_data->ply] == move) {
-            search_data->score_pv = 0;
-            return PV_MOVE_SCORE;
-        }
-    }
-
-    if(get_move_capture(move)) {
-        // captures scores with mvv_lva
-        int target_piece = P; // if it isnt initialized en passant wont work, because doesnt containe the piiece on the square
-        int target_square = get_move_target(move);
-
-        int start_piece, end_piece;
-        if(board->side_to_move == white) {
-            start_piece = p;
-            end_piece = k;
-        } else if(board->side_to_move == black) {
-            start_piece = P;
-            end_piece = K;
-        }
-
-        for(int bb_piece = start_piece; bb_piece <= end_piece; bb_piece++ ) {
-            if(get_bit(board->pieces[bb_piece], target_square)) {
-                target_piece = bb_piece;
-                break;
-            }
-        }
-
-        return mvv_lva[get_move_piece(move)][target_piece] + CAPTURE_MOVE_SCORE;
-    } else { // quiet move
-        // score 1st killer move
-        if(search_data->killer_moves[0][search_data->ply] == move) {
-            return KILLER_MOVE_SCORE_1;
-        }
-        // score 2nd killer move
-        else if(search_data->killer_moves[1][search_data->ply] == move) {
-            return KILLER_MOVE_SCORE_2;
-        }
-        else  {
-            return search_data->history_moves[get_move_piece(move)][get_move_target(move)];
-        }
-        // score history move
-
-        return 0;
-    }
-
-    return 0;
-}
-
-void merge(Moves* move_list, int* move_scores, int left, int mid, int right) {
-    int i, j, k;
-    int n1 = mid - left + 1;
-    int n2 = right - mid;
-    int left_moves[n1], right_moves[n2];
-    int left_scores[n1], right_scores[n2];
-    
-    for(i = 0; i < n1; i++) {
-        left_moves[i] = move_list->moves[left + i];
-        left_scores[i] = move_scores[left + i];
-    }
-    for(j = 0; j < n2; j++) {
-        right_moves[j] = move_list->moves[mid + 1 + j];
-        right_scores[j] = move_scores[mid + 1 + j];
-    }
-    i = 0;
-    j = 0;
-    k = left;
-    while(i < n1 && j < n2) {
-        if(left_scores[i] >= right_scores[j]) {
-            move_list->moves[k] = left_moves[i];
-            move_scores[k] = left_scores[i];
-            i++;
-        } else {
-            move_list->moves[k] = right_moves[j];
-            move_scores[k] = right_scores[j];
-            j++;
-        }
-        k++;
-    }
-
-    while(i < n1) {
-        move_list->moves[k] = left_moves[i];
-        move_scores[k] = left_scores[i];
-        i++;
-        k++;
-    }
-    while(j < n2) {
-        move_list->moves[k] = right_moves[j];
-        move_scores[k] = right_scores[j];
-        j++;
-        k++;
-    }
-}
-
-void merge_sort(Moves* move_list, int* move_scores, int left, int right) {
-    if(left < right) {
-        int mid = left + (right - left) / 2;
-        merge_sort(move_list, move_scores, left, mid);
-        merge_sort(move_list, move_scores, mid + 1, right);
-        merge(move_list, move_scores, left, mid, right);
-    }
-}
-
-void sort_moves(Moves* move_list, Board* board, search_heuristics* search_data) {
-    int move_scores[move_list->count];
-    for(int i = 0; i < move_list->count; i++) {
-        move_scores[i] = score_move(move_list->moves[i], board, search_data);
-    }
-
-    merge_sort(move_list, move_scores, 0, move_list->count - 1);
-}
-
-void enable_pv_scoring(Moves* move_list, search_heuristics* search_data) {
-    search_data->follow_pv = 0;
-    
-    for(int count = 0; count < move_list->count; count++) {
-        if(search_data->pv_table[0][search_data->ply] == move_list->moves[count]) {
-            search_data->score_pv = 1;
-            search_data->follow_pv = 1;
-            break;
-        }
-    }
-}
-
-int evaluate(Board* board) {
-    int score = 0;
-    uint64_t bitboard;
-    int square;
-
-    for(int bb_piece = P; bb_piece <= k; bb_piece++) {
-        bitboard = board->pieces[bb_piece];
-        while(bitboard) {
-            square = get_least_significant_bit_index(bitboard);
-            score += material_score[bb_piece];
-
-            // evaluate with positional score tables
-            // early queen movement leads to loss
-            switch(bb_piece) {
-                // white
-                case P:
-                    score += pawn_score[square];
-                    break;
-                case N:
-                    score += knight_score[square];
-                    break;
-                case B:
-                    score += bishop_score[square];
-                    break;
-                case R:
-                    score += rook_score[square];
-                    break;
-                case K:
-                    score += king_score[square];
-                    break;
-                // black
-                case p:
-                    score -= pawn_score[mirror_score[square]];
-                    break;
-                case n:
-                    score -= knight_score[mirror_score[square]];
-                    break;
-                case b:
-                    score -= bishop_score[mirror_score[square]];
-                    break;
-                case r:
-                    score -= rook_score[mirror_score[square]];
-                    break;
-                case k:
-                    score -= king_score[mirror_score[square]];
-                    break;
-            }
-
-            pop_bit(bitboard, square);
-        }
-    }
-
-    if(board->side_to_move == white) {
-        return score;
-    } else if (board->side_to_move == black) {
-        return -score;
-    }
-    return 0;
-}
 
 int quiescence(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, 
     search_heuristics* search_data, time_controls* time_info, 
     zoobrist_hash_keys* hash_keys, repetition_data* repetition_table, 
     int alpha, int beta) {
-    if((search_data->nodes & 2047) == 0) { // check every 2048 nodes for time up
+    if((search_data->nodes & 255) == 0) { // check every 2048 nodes for time up
         communicate(time_info);
     }
 
@@ -353,15 +67,18 @@ int quiescence(Board* board, leaper_moves_masks* leaper_masks, slider_moves_mask
         }
 
         int score = -quiescence(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, repetition_table, -beta, -alpha);
+        
         take_back(board);
         take_back_board_hash_key(hash_keys);
         search_data->ply--;
         repetition_table->index--;
 
+        if(time_info->stopped) return 0;
+
         if(score >= beta){
             return beta;
         }
-
+                
         if(score > alpha) {
             alpha = score;
 
@@ -396,7 +113,7 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
 
     search_data->pv_lenght[search_data->ply] = search_data->ply;
     
-    if((search_data->nodes & 2047) == 0) { // check every 2048 nodes for time up
+    if((search_data->nodes & 255) == 0) { // check every 2048 nodes for time up
         communicate(time_info);
     }
 
@@ -566,16 +283,4 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
     write_hash_entry(transposition_table, hash_keys, search_data, alpha, depth, hash_flag); // store hash entry with exact score or alpha score
 
     return alpha;
-}
-
-
-
-// -----------
-void print_move_scores(Moves* move_list, Board* board, search_heuristics* search_data) {
-    // debugging purpose
-    // to see if sort move function works correcly
-    for(int i = 0; i < move_list->count; i++) {
-        print_move(move_list->moves[i]);
-        printf("move score: %d\n\n", score_move(move_list->moves[i], board, search_data));
-    }
 }

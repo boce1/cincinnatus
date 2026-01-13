@@ -146,15 +146,17 @@ void parse_go(char* command, Board* board, leaper_moves_masks* leaper_masks, sli
         time_info->timeset = 1;
 
         // set up timing
-        time_info->time /= time_info->movestogo;
+        if (time_info->time <= 2000) time_info->time = time_info->time / 2;
+        else time_info->time /= time_info->movestogo;
         
         // "illegal" (empty) move bug fix
-        if (time_info->time > 1500) time_info->time -= 50;
+        if (time_info->time > 1500) time_info->time -= 150;
         /*
-            Engines dont want to use 100% of the remaining time, because small inaccuracies in timing or delays in processing could make the engine run out of time before it makes a move.
+            Engines dont want to use 100% of the remaining time, because small inaccuracies in timing or 
+            delays in processing could make the engine run out of time before it makes a move.
             Subtracting 50 ms ensures the engine stops slightly before the absolute limit.
 
-            Engines at the beggining use more time to think at the beggining of the game, because the position is more complex
+            Engines at the beggining use more time to think, because the position is more complex
             and early mistakes cost more. Remaining time at the beggining is large and uci tells the engine to excptect 40 moves to be played with movestogo.
             So the engine can use more time to think at the beggining of the game.
         */
@@ -231,6 +233,7 @@ void search_position(int depth, Board* board, leaper_moves_masks* leaper_masks, 
     search_heuristics* search_data, time_controls* time_info, 
     zoobrist_hash_keys* hash_keys, tag_hash* transposition_table, repetition_data* repetition_table) {
     // clear helper data structure for search
+    int score;
     init_search_heuristics(search_data);
     int alpha = ALPHA;
     int beta = BETA;
@@ -243,9 +246,16 @@ void search_position(int depth, Board* board, leaper_moves_masks* leaper_masks, 
             break;
         }
 
+        int remaining = time_info->stoptime - get_time_ms();
+        if (time_info->timeset && remaining < 300) break; // shallow-only
+
         search_data->follow_pv = 1;
 
-        int score = negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, repetition_table, alpha, beta, current_depth);      
+        if (time_info->timeset && (time_info->stoptime - get_time_ms()) < 800) {
+            score = negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, repetition_table, alpha, beta, 1);
+        } else {
+            score = negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, repetition_table, alpha, beta, current_depth);      
+        }
 
         // window aspiration
         if(score <= alpha || score >= beta) {
