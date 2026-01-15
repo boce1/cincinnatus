@@ -10,7 +10,7 @@
 #include <stdio.h>
 
 int parse_move(char* move_string, Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks);
-void parse_position(char* command, Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, zoobrist_hash_keys* hash_keys);
+void parse_position(char* command, Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, search_heuristics* search_data, zoobrist_hash_keys* hash_keys, repetition_data* repetition_table);
 void parse_go(char* command, Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, 
     search_heuristics* search_data, time_controls* time_info, 
     zoobrist_hash_keys* hash_keys, tag_hash* transposition_table, repetition_data* repetition_table); // called when GUI tells engine to calculate moves

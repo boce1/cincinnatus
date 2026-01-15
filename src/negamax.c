@@ -230,13 +230,13 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
         take_back(board);
         take_back_board_hash_key(hash_keys);
 
-        if(time_info->stopped) {
-            return 0;
-        }
-
         search_data->ply--;
         repetition_table->index--;
         moves_searched++;
+
+        if(time_info->stopped) {
+            return 0;
+        }
 
         if(score >= beta) {
             write_hash_entry(transposition_table, hash_keys, search_data, beta, depth, HASH_FLAG_BETA);

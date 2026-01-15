@@ -47,7 +47,7 @@ to command user can pas FEN string
 or FEN string + moves to make
 */
 
-void parse_position(char* command, Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, zoobrist_hash_keys* hash_keys) {
+void parse_position(char* command, Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, search_heuristics* search_data, zoobrist_hash_keys* hash_keys, repetition_data* repetition_table) {
     command += 9;
     char* current_char = command;
 
@@ -65,6 +65,9 @@ void parse_position(char* command, Board* board, leaper_moves_masks* leaper_mask
         }
     }
 
+    search_data->ply = 0; // reset search ply, IT SHOULD BE ZERO, but safe to reset it here
+    repetition_table->index = 0; // reset repetition table index
+    memset(repetition_table->keys, 0, sizeof(repetition_table->keys)); // clear repetition table
     init_board_hash_key(board, hash_keys); // initialize hash key after setting up the board
 
     current_char = strstr(command, "moves");
@@ -76,7 +79,7 @@ void parse_position(char* command, Board* board, leaper_moves_masks* leaper_mask
             if(move == 0) {
                 break;
             }
-
+            repetition_table->keys[repetition_table->index++] = hash_keys->board_hash_key;
             make_move(board, move, all_moves, leaper_masks, slider_masks, hash_keys); // the board hash will be updated in make move function
 
             while(*current_char && *current_char != ' ') {
@@ -86,6 +89,7 @@ void parse_position(char* command, Board* board, leaper_moves_masks* leaper_mask
         }
     }
     print_board(board);
+    print_hash_key(board, hash_keys);
 }
 
 /*
@@ -150,7 +154,7 @@ void parse_go(char* command, Board* board, leaper_moves_masks* leaper_masks, sli
         else time_info->time /= time_info->movestogo;
         
         // "illegal" (empty) move bug fix
-        if (time_info->time > 1500) time_info->time -= 150;
+        if (time_info->time > 1500) time_info->time -= 100;
         /*
             Engines dont want to use 100% of the remaining time, because small inaccuracies in timing or 
             delays in processing could make the engine run out of time before it makes a move.
@@ -206,11 +210,11 @@ void uci_loop(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks
             continue;
         }
         else if(strncmp(input, "position", 8) == 0) {
-            parse_position(input, board, leaper_masks, slider_masks, hash_keys);
+            parse_position(input, board, leaper_masks, slider_masks, search_data, hash_keys, repetition_table);
             clear_transposition_table(transposition_table);
         }
         else if(strncmp(input, "ucinewgame", 10) == 0) {
-            parse_position("position startpos", board, leaper_masks, slider_masks, hash_keys);
+            parse_position("position startpos", board, leaper_masks, slider_masks, search_data, hash_keys, repetition_table);
             clear_transposition_table(transposition_table);
         }
         else if(strncmp(input, "go", 2) == 0) {
@@ -247,12 +251,13 @@ void search_position(int depth, Board* board, leaper_moves_masks* leaper_masks, 
         }
 
         int remaining = time_info->stoptime - get_time_ms();
-        if (time_info->timeset && remaining < 300) break; // shallow-only
+        if (time_info->timeset && remaining < 10) break; // shallow-only
 
         search_data->follow_pv = 1;
 
-        if (time_info->timeset && (time_info->stoptime - get_time_ms()) < 800) {
+        if (current_depth==1 && time_info->timeset && (time_info->stoptime - get_time_ms()) < 300) {
             score = negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, repetition_table, alpha, beta, 1);
+            break;
         } else {
             score = negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, repetition_table, alpha, beta, current_depth);      
         }

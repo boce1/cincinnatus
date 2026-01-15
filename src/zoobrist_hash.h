@@ -54,7 +54,7 @@ typedef struct {
 } tag_hash;
 
 typedef struct {
-    uint64_t keys[200]; // stores hash keys for each ply
+    uint64_t keys[500]; // stores hash keys for each ply, 250 moves for each side
     int index; // current ply in the game
 } repetition_data;
 
