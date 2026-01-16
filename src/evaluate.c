@@ -84,6 +84,83 @@ const int mirror_score[128] = {
 	a8, b8, c8, d8, e8, f8, g8, h8
 };
 
+evaluation_masks* create_evaluation_masks() {
+    evaluation_masks* masks = (evaluation_masks*)malloc(sizeof(evaluation_masks));
+    return masks;
+}
+void init_evaluation_masks(evaluation_masks* masks) {
+    // file masks
+    uint64_t file_mask;
+    for(int square = 0; square < 64; square++) {
+        file_mask = 0ULL;
+        int file = square % 8;
+        for(int rank = 0; rank < 8; rank++) {
+            set_bit(file_mask, rank * 8 + file);
+        }
+        masks->file_masks[square] = file_mask;
+    }
+
+    // rank masks
+    uint64_t rank_mask;
+    for(int square = 0; square < 64; square++) {
+        rank_mask = 0ULL;
+        int rank = square / 8;
+        for(int file = 0; file < 8; file++) {
+            set_bit(rank_mask, rank * 8 + file);
+        }
+        masks->rank_masks[square] = rank_mask;
+    }
+
+    // isolated pawn masks
+    for(int rank = 0; rank < 8; rank++) {
+        for(int file = 0; file < 8; file++) {
+            int square = rank * 8 + file;
+            int prev_file = file - 1;
+            int next_file = file + 1;
+            masks->isolated_masks[square] = 0ULL;
+            if(file > 0) {
+                masks->isolated_masks[square] |= masks->file_masks[rank * 8 + prev_file];
+            }
+            if(file < 7) {
+                masks->isolated_masks[square] |= masks->file_masks[rank * 8 + next_file];
+            }
+        }
+    }
+    
+    // passed white pawn masks
+    for(int rank=0; rank < 8; rank++) {
+        for(int file = 0; file < 8; file++) {
+            int square = rank * 8 + file;
+            masks->passed_pawn_masks[white][square] = 0ULL;
+            masks->passed_pawn_masks[white][square] |= masks->file_masks[square];
+            masks->passed_pawn_masks[white][square] |= masks->isolated_masks[square];
+    
+            for(int r = rank; r < 8; r++) {
+                pop_bit(masks->passed_pawn_masks[white][square], r * 8 + file);
+                pop_bit(masks->passed_pawn_masks[white][square], r * 8 + file - 1);
+                pop_bit(masks->passed_pawn_masks[white][square], r * 8 + file + 1);
+            }
+        }
+    }
+
+    // passed black pawn masks
+    for(int rank = 0; rank < 8; rank++) {
+        for(int file = 0; file < 8; file++) {
+            int square = rank * 8 + file;
+            masks->passed_pawn_masks[black][square] = 0ULL;
+            masks->passed_pawn_masks[black][square] |= masks->file_masks[square];
+            masks->passed_pawn_masks[black][square] |= masks->isolated_masks[square];
+
+            for(int r = rank; r >= 0; r--) {
+                pop_bit(masks->passed_pawn_masks[black][square], r * 8 + file);
+                pop_bit(masks->passed_pawn_masks[black][square], r * 8 + file - 1);
+                pop_bit(masks->passed_pawn_masks[black][square], r * 8 + file + 1);
+            }
+        }
+    }
+}
+
+
 int evaluate(Board* board) {
     int score = 0;
     uint64_t bitboard;

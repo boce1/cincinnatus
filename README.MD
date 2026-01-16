@@ -72,8 +72,8 @@ This engine works with UCI protocol and every GUI that supports UCI can start th
 
 
 There's executables in ```bin``` folder. 
-- For ***Windows*** load the ```bitboard_chess_windows_release.exe```
-- For ***Linux distros*** load the ```bitboard_chess_linux_release```
+- For ***Windows*** load the ```cincinnatus_windows_release.exe```
+- For ***Linux distros*** load the ```cincinnatus_linux_release```
 
 ## Build Instructions (If the executables are not system compatable)
 ### Requirements
@@ -87,19 +87,18 @@ git clone https://github.com/boce1/cincinnatus.git
 cd cincinnatus
 ```
 
-To run the "release" version of the chess bot
+To compile the realise vesrion
 ```bash
-make linux_release
-./bin/bitboard_chess_linux_release
+make
 ```
 
-For debug
+If your OS is `Windows` and `GCC` is added to the path, you can compile with
 ```bash
 make linux_debug
-./bin/bitboard_chess_debug
 ```
 
-Note: The ```linux_release``` and ```linux_debug``` will work for all OSes if the ```gcc``` compiler is installed.
+
+After compilation load the executable into the UCI GUI.
 
 ## Name of the engine
 This bitboard chess engine is named after the statesman Lucius Quinctius Cincinnatus in early Roman Republic (5th BC). When Rome was threatened by the Aequi, the Senate appointed him dictator, an emergency office with supreme authority. Cincinnatus raised a citizen army, defeated the Aequi in just over two weeks, and, instead of clinging to power, resigned his dictatorship and returned to his farm. Cincinnatus became a symbol of Roman ideals — duty, service, and humility. Later generations admired him as the man who chose the plow over permanent power.
@@ -212,9 +211,9 @@ Engines store two killer moves per depth because:
 # UCI protocol
 [UCI (Universal Chess Interface)](#references) is communication protocol that is designed to work with GUIs. Supported commands by this engine:
 - ```parse startpos``` - puts the board in the starting position
-- ```parse fen``` ```__fen string__``` - change the board state based on the fen
-- ```parse fen``` ```__fen string__``` ```__move list__``` - change the board state based on the fen and makes the moves in the move list
-- ```go``` ```__depth__``` - searches for the best move at the given position. Does the negamax search at the specified depth. If the depth isnt specified, default depth is 6.
+- ```parse fen``` ```fen string``` - change the board state based on the fen
+- ```parse fen``` ```fen string``` ```move list``` - change the board state based on the fen and makes the moves in the move list
+- ```go``` ```depth``` - searches for the best move at the given position. Does the negamax search at the specified depth. If the depth isnt specified, default depth is 6.
 - ```uci``` - test if the engine supports UCI protocol
 - ```quit``` - stops the engine
 -  ```ucinewgame``` - initialize the board the start position and starts the game

@@ -2,7 +2,7 @@
 
 void create_data_structures(leaper_moves_masks** leaper_masks, slider_moves_masks** slider_masks, 
     Board** board, search_heuristics** search_data, time_controls** time_info, 
-    zoobrist_hash_keys** hash_data, tag_hash** transposition_table, repetition_data** repetition_table) {
+    zoobrist_hash_keys** hash_data, tag_hash** transposition_table, repetition_data** repetition_table, evaluation_masks** eval_masks) {
     *leaper_masks = create_leaper_moves_masks(); // pawn, knight, king masks
     if(!*leaper_masks) {
         fprintf(stderr, "Failed to allocate memory for leaper moves masks\n");
@@ -71,12 +71,25 @@ void create_data_structures(leaper_moves_masks** leaper_masks, slider_moves_mask
         fprintf(stderr, "Failed to allocate memory for repetition table\n");
         exit(EXIT_FAILURE);
     }
+    *eval_masks = create_evaluation_masks();
+    if(!*eval_masks) {
+        free(*leaper_masks);
+        free(*slider_masks);
+        free(*board);
+        free(*search_data);
+        free(*time_info);
+        free(*hash_data);
+        free(*transposition_table);
+        free(*repetition_table);
+        fprintf(stderr, "Failed to allocate memory for evaluation masks\n");
+        exit(EXIT_FAILURE);
+    }
 }
 
 
 void free_data_structures(leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, 
     Board* board, search_heuristics* search_data, time_controls* time_info, 
-    zoobrist_hash_keys* hash_data, tag_hash* transposition_table, repetition_data* repetition_table) {
+    zoobrist_hash_keys* hash_data, tag_hash* transposition_table, repetition_data* repetition_table, evaluation_masks* eval_masks) {
     if(board != NULL) {
         free(board); 
     }
@@ -102,11 +115,14 @@ void free_data_structures(leaper_moves_masks* leaper_masks, slider_moves_masks* 
     if(repetition_table != NULL) {
         free(repetition_table);
     }
+    if(eval_masks != NULL) {
+        free(eval_masks);
+    }
 }
 
 void init_data_structures(leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, 
     Board* board, search_heuristics* search_data, time_controls* time_info, 
-    zoobrist_hash_keys* hash_data, tag_hash* transposition_table, repetition_data* repetition_table) {
+    zoobrist_hash_keys* hash_data, tag_hash* transposition_table, repetition_data* repetition_table, evaluation_masks* eval_masks) {
     init_leaper_moves_masks(leaper_masks);
     init_slider_moves_masks(slider_masks);
     init_board(board);
@@ -115,4 +131,5 @@ void init_data_structures(leaper_moves_masks* leaper_masks, slider_moves_masks* 
     init_zoobrist_random_keys(hash_data);
     clear_transposition_table(transposition_table);
     init_repetition_table(repetition_table);
+    init_evaluation_masks(eval_masks);
 }
