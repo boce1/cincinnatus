@@ -76,12 +76,12 @@ search_heuristics* create_search_heuristics();
 void init_search_heuristics(search_heuristics* search_data);
 
 int quiescence(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, 
-  search_heuristics* search_data, time_controls* time_info, zoobrist_hash_keys* hash_keys, repetition_data* repetition_table,
+  search_heuristics* search_data, time_controls* time_info, zoobrist_hash_keys* hash_keys, repetition_data* repetition_table, evaluation_masks* eval_masks,
   int alpha, int beta);
 
 int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, 
   search_heuristics* search_data, time_controls* time_info, zoobrist_hash_keys* hash_keys, 
-  tag_hash* transposition_table, repetition_data* repetition_table,
+  tag_hash* transposition_table, repetition_data* repetition_table, evaluation_masks* eval_masks,
   int alpha, int beta, int depth);
 
 

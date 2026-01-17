@@ -101,7 +101,7 @@ or until the max depht wich is 64 plies
 
 void parse_go(char* command, Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, 
     search_heuristics* search_data, time_controls* time_info, 
-    zoobrist_hash_keys* hash_keys, tag_hash* transposition_table, repetition_data* repetition_table) {
+    zoobrist_hash_keys* hash_keys, tag_hash* transposition_table, repetition_data* repetition_table, evaluation_masks* eval_masks) {
     int depth = -1;
     char* current_char = NULL;
 
@@ -178,13 +178,13 @@ void parse_go(char* command, Board* board, leaper_moves_masks* leaper_masks, sli
     printf("time:%d start:%d stop:%d depth:%d timeset:%d\n",
     time_info->time, time_info->starttime, time_info->stoptime, depth, time_info->timeset);
 
-    search_position(depth, board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, repetition_table);
+    search_position(depth, board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, repetition_table, eval_masks);
 }
 
 
 void uci_loop(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, 
     search_heuristics* search_data, time_controls* time_info, 
-    zoobrist_hash_keys* hash_keys, tag_hash* transposition_table, repetition_data* repetition_table) {
+    zoobrist_hash_keys* hash_keys, tag_hash* transposition_table, repetition_data* repetition_table, evaluation_masks* eval_masks) {
     setbuf(stdin, NULL);
     setbuf(stdout, NULL);
 
@@ -218,7 +218,7 @@ void uci_loop(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks
             clear_transposition_table(transposition_table);
         }
         else if(strncmp(input, "go", 2) == 0) {
-            parse_go(input, board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, repetition_table);
+            parse_go(input, board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, repetition_table, eval_masks);
         }
         else if(strncmp(input, "quit", 4) == 0) {
             break;
@@ -235,7 +235,7 @@ void uci_loop(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks
 
 void search_position(int depth, Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, 
     search_heuristics* search_data, time_controls* time_info, 
-    zoobrist_hash_keys* hash_keys, tag_hash* transposition_table, repetition_data* repetition_table) {
+    zoobrist_hash_keys* hash_keys, tag_hash* transposition_table, repetition_data* repetition_table, evaluation_masks* eval_masks) {
     // clear helper data structure for search
     int score;
     init_search_heuristics(search_data);
@@ -256,10 +256,10 @@ void search_position(int depth, Board* board, leaper_moves_masks* leaper_masks, 
         search_data->follow_pv = 1;
 
         if (current_depth==1 && time_info->timeset && (time_info->stoptime - get_time_ms()) < 300) {
-            score = negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, repetition_table, alpha, beta, 1);
+            score = negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, repetition_table, eval_masks, alpha, beta, 1);
             break;
         } else {
-            score = negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, repetition_table, alpha, beta, current_depth);      
+            score = negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, repetition_table, eval_masks, alpha, beta, current_depth);      
         }
 
         // window aspiration

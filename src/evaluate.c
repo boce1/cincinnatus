@@ -84,10 +84,33 @@ const int mirror_score[128] = {
 	a8, b8, c8, d8, e8, f8, g8, h8
 };
 
+const int square_bonus_index[64] = {
+    7, 7, 7, 7, 7, 7, 7, 7,
+    6, 6, 6, 6, 6, 6, 6, 6,
+    5, 5, 5, 5, 5, 5, 5, 5,
+    4, 4, 4, 4, 4, 4, 4, 4,
+    3, 3, 3, 3, 3, 3, 3, 3,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    1, 1, 1, 1, 1, 1, 1, 1,
+    0, 0, 0, 0, 0, 0, 0, 0
+};
+
+const int square_bonus[8] = {
+    0,   // rank 1
+    5,  // rank 2
+    10,  // rank 3
+    20,  // rank 4
+    35,  // rank 5
+    60,  // rank 6
+    100,  // rank 7
+    200   // rank 8
+};
+
 evaluation_masks* create_evaluation_masks() {
     evaluation_masks* masks = (evaluation_masks*)malloc(sizeof(evaluation_masks));
     return masks;
 }
+
 void init_evaluation_masks(evaluation_masks* masks) {
     // file masks
     uint64_t file_mask;
@@ -161,11 +184,11 @@ void init_evaluation_masks(evaluation_masks* masks) {
 }
 
 
-int evaluate(Board* board) {
+int evaluate(Board* board, evaluation_masks* eval_masks) {
     int score = 0;
     uint64_t bitboard;
     int square;
-
+    int pawns;
     for(int bb_piece = P; bb_piece <= k; bb_piece++) {
         bitboard = board->pieces[bb_piece];
         while(bitboard) {
@@ -178,6 +201,23 @@ int evaluate(Board* board) {
                 // white
                 case P:
                     score += pawn_score[square];
+
+                    // double pawn penalty
+                    pawns = count_bits(board->pieces[P] & eval_masks->file_masks[square]);
+                    if(pawns > 1) {
+                        score += DOUBLE_PAWN_PENALTY * (pawns - 1);
+                    }
+
+                    // isolated pawn penalty
+                    if((board->pieces[P] & eval_masks->isolated_masks[square]) == 0ULL) {
+                        score += ISOLATED_PAWN_PENALTY;
+                    }
+
+                    // passed pawn bonus
+                    if((board->pieces[p] & eval_masks->passed_pawn_masks[white][square]) == 0ULL) {
+                        score += square_bonus[square_bonus_index[square]];
+                    }
+
                     break;
                 case N:
                     score += knight_score[square];
@@ -194,6 +234,23 @@ int evaluate(Board* board) {
                 // black
                 case p:
                     score -= pawn_score[mirror_score[square]];
+
+                    // double pawn penalty
+                    pawns = count_bits(board->pieces[p] & eval_masks->file_masks[square]);
+                    if(pawns > 1) {
+                        score -= DOUBLE_PAWN_PENALTY * (pawns - 1);
+                    }
+
+                    // isolated pawn penalty
+                    if((board->pieces[p] & eval_masks->isolated_masks[square]) == 0ULL) {
+                        score -= ISOLATED_PAWN_PENALTY;
+                    }
+
+                    // passed pawn bonus
+                    if((board->pieces[P] & eval_masks->passed_pawn_masks[black][square]) == 0ULL) {
+                        score -= square_bonus[square_bonus_index[mirror_score[square]]];
+                    }
+
                     break;
                 case n:
                     score -= knight_score[mirror_score[square]];
