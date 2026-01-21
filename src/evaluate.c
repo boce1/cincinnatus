@@ -226,11 +226,33 @@ int evaluate(Board* board, evaluation_masks* eval_masks) {
                     score += bishop_score[square];
                     break;
                 case R:
-                    score += rook_score[square];
+                    score += rook_score[square]; // positioan scores
+
+                    // semi open file bonus
+                    if((board->pieces[P] & eval_masks->file_masks[square]) == 0ULL) {
+                        score += 2 * SEMI_OPEN_FILE_SCORE;
+                    }
+
+                    if(((board->pieces[P] | board->pieces[p]) & eval_masks->file_masks[square]) == 0ULL) {
+                        score += SEMI_OPEN_FILE_SCORE;
+                    }
+
                     break;
                 case K:
                     score += king_score[square];
+                    
+                    // open file penalty for king
+                    if((board->pieces[P] & eval_masks->file_masks[square]) == 0ULL) {
+                        score -= 2 * SEMI_OPEN_FILE_SCORE;
+                    }
+
+                    if(((board->pieces[P] | board->pieces[p]) & eval_masks->file_masks[square]) == 0ULL) {
+                        score -= SEMI_OPEN_FILE_SCORE;
+                    }
+
                     break;
+
+
                 // black
                 case p:
                     score -= pawn_score[mirror_score[square]];
@@ -260,9 +282,29 @@ int evaluate(Board* board, evaluation_masks* eval_masks) {
                     break;
                 case r:
                     score -= rook_score[mirror_score[square]];
+
+                    // semi open file bonus
+                    if((board->pieces[p] & eval_masks->file_masks[square]) == 0ULL) {
+                        score -= 2 * SEMI_OPEN_FILE_SCORE;
+                    }
+
+                    if(((board->pieces[P] | board->pieces[p]) & eval_masks->file_masks[square]) == 0ULL) {
+                        score -= SEMI_OPEN_FILE_SCORE;
+                    }
+
                     break;
                 case k:
                     score -= king_score[mirror_score[square]];
+
+                    // open file penalty for king
+                    if((board->pieces[p] & eval_masks->file_masks[square]) == 0ULL) {
+                        score += 2 * SEMI_OPEN_FILE_SCORE;
+                    }
+
+                    if(((board->pieces[P] | board->pieces[p]) & eval_masks->file_masks[square]) == 0ULL) {
+                        score += SEMI_OPEN_FILE_SCORE;
+                    }
+
                     break;
             }
 

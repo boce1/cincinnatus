@@ -33,7 +33,7 @@ int main() {
         parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -", board);
         parse_fen(start_position, board);
         parse_fen(repetitions, board);
-        parse_fen("8/8/3P4/8/8/5p2/8/8 w - - ", board);
+        parse_fen("6k1/5p1p/8/8/8/8/5P1P/6K1 w - - ", board);
         // info score cp 0 depth 5 nodes 56624 pv e2a6 e6d5 c3d5 b6d5 e4d5
         // info score cp 0 depth 5 nodes 55960 pv e2a6 e6d5 c3d5 b6d5 e4d5 
         init_board_hash_key(board, hash_data);
@@ -54,8 +54,9 @@ int main() {
         // for(int i = 0; i < 64; i++) {
         //     print_bitboard(eval_masks->passed_pawn_masks[black][i]);
         // }
-        print_bitboard(eval_masks->passed_pawn_masks[white][get_least_significant_bit_index(board->pieces[P])]);
-        print_bitboard(eval_masks->passed_pawn_masks[black][get_least_significant_bit_index(board->pieces[p])]);
+        
+        //print_bitboard(eval_masks->passed_pawn_masks[white][get_least_significant_bit_index(board->pieces[P])]);
+        //print_bitboard(eval_masks->passed_pawn_masks[black][get_least_significant_bit_index(board->pieces[p])]);
 
         printf("\nscore %d\n", evaluate(board, eval_masks));
 

@@ -9,6 +9,8 @@
 #define DOUBLE_PAWN_PENALTY -20
 #define ISOLATED_PAWN_PENALTY -10
 
+#define SEMI_OPEN_FILE_SCORE 10
+
 extern const int material_score[12];
 extern const int pawn_score[64];
 extern const int knight_score[64];
