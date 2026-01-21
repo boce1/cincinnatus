@@ -25,7 +25,7 @@ enum { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
 
 extern const int material_score[2][12];
 extern const int positional_score[2][6][64]; // positional piece scores [game phase][piece][square]
-extern const int mirror_score[128];
+extern const int mirror_score[64];
 
 extern const int square_bonus_index[64];
 extern const int square_bonus[8];
@@ -55,5 +55,10 @@ void init_evaluation_masks(evaluation_masks* masks);
     queen material in the oppening
 */
 int get_game_phase_score(Board* board);
+int get_interpolated_material_score(int bb_piece, int game_phase_score);
+int get_interpolated_positional_score(int piece_type, int square, int game_phase_score);
+
+int get_material_score(int phase, int bb_piece, int game_phase_score);
+int get_positional_score(int phase, int piece_type, int square, int game_phase_score);
 
 #endif // EVALUATE_H
