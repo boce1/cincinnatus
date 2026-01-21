@@ -184,7 +184,7 @@ void init_evaluation_masks(evaluation_masks* masks) {
 }
 
 
-int evaluate(Board* board, evaluation_masks* eval_masks) {
+int evaluate(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, evaluation_masks* eval_masks) {
     int score = 0;
     uint64_t bitboard;
     int square;
@@ -224,6 +224,7 @@ int evaluate(Board* board, evaluation_masks* eval_masks) {
                     break;
                 case B:
                     score += bishop_score[square];
+                    score += count_bits(get_bishop_attacks(slider_masks, square, board->occupancies[both]));
                     break;
                 case R:
                     score += rook_score[square]; // positioan scores
@@ -245,12 +246,18 @@ int evaluate(Board* board, evaluation_masks* eval_masks) {
                     if((board->pieces[P] & eval_masks->file_masks[square]) == 0ULL) {
                         score -= 2 * SEMI_OPEN_FILE_SCORE;
                     }
-
                     if(((board->pieces[P] | board->pieces[p]) & eval_masks->file_masks[square]) == 0ULL) {
                         score -= SEMI_OPEN_FILE_SCORE;
                     }
 
+                    // king safety bonus
+                    score += count_bits((get_king_attacks(leaper_masks, square) & board->occupancies[white])) * KING_SHIELD_SCORE;
+
                     break;
+                case Q:
+                    score += count_bits(get_queen_attacks(slider_masks, square, board->occupancies[both]));
+                    break;
+
 
 
                 // black
@@ -279,6 +286,7 @@ int evaluate(Board* board, evaluation_masks* eval_masks) {
                     break;
                 case b:
                     score -= bishop_score[mirror_score[square]];
+                    score -= count_bits(get_bishop_attacks(slider_masks, square, board->occupancies[both]));
                     break;
                 case r:
                     score -= rook_score[mirror_score[square]];
@@ -305,6 +313,11 @@ int evaluate(Board* board, evaluation_masks* eval_masks) {
                         score += SEMI_OPEN_FILE_SCORE;
                     }
 
+                    score -= count_bits((get_king_attacks(leaper_masks, square) & board->occupancies[black])) * KING_SHIELD_SCORE;
+
+                    break;
+                case q: 
+                    score -= count_bits(get_queen_attacks(slider_masks, square, board->occupancies[both]));
                     break;
             }
 

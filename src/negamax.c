@@ -34,11 +34,11 @@ int quiescence(Board* board, leaper_moves_masks* leaper_masks, slider_moves_mask
     }
 
     if(search_data->ply >= MAX_PLY) {
-        return evaluate(board, eval_masks);
+        return evaluate(board, leaper_masks, slider_masks, eval_masks);
     }
     search_data->nodes++; 
 
-    int eval = evaluate(board, eval_masks);
+    int eval = evaluate(board, leaper_masks, slider_masks, eval_masks);
     if(eval >= beta) {
         return beta;
     }
@@ -123,7 +123,7 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
         return quiescence(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, repetition_table, eval_masks, alpha, beta);
     }
     if(search_data->ply >= MAX_PLY) {
-        return evaluate(board, eval_masks);
+        return evaluate(board, leaper_masks, slider_masks, eval_masks);
     }
 
     search_data->nodes++; // will be used later to reduced search space
