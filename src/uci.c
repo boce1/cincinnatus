@@ -105,6 +105,8 @@ void parse_go(char* command, Board* board, leaper_moves_masks* leaper_masks, sli
     int depth = -1;
     char* current_char = NULL;
 
+    init_time_controls(time_info); // reset time control info
+
     if((current_char = strstr(command, "infinite"))) 
         depth = MAX_PLY; // effectively infinite
     
@@ -175,7 +177,7 @@ void parse_go(char* command, Board* board, leaper_moves_masks* leaper_masks, sli
         depth = MAX_PLY;
 
     // print debug info
-    printf("time:%d start:%d stop:%d depth:%d timeset:%d\n",
+    printf("time:%d start:%u stop:%u depth:%d timeset:%d\n",
     time_info->time, time_info->starttime, time_info->stoptime, depth, time_info->timeset);
 
     search_position(depth, board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, repetition_table, eval_masks);
@@ -191,7 +193,7 @@ void uci_loop(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks
     char input[2000];
 
     printf("id name cincinnatus\n");
-    printf("id name Boyan\n");
+    printf("id author Boyan\n");
     printf("uciok\n");
 
     while(1) {
@@ -225,8 +227,8 @@ void uci_loop(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks
         }
         else if(strncmp(input, "uci", 3) == 0) {
             // testing if the engine supports uci protocol
-            printf("id name cincinnatus\n");
-            printf("id name Boyan\n");
+            printf("id name Cincinnatus\n");
+            printf("id author Boyan\n");
             printf("uciok\n");
         }
     }
@@ -238,9 +240,9 @@ void search_position(int depth, Board* board, leaper_moves_masks* leaper_masks, 
     zoobrist_hash_keys* hash_keys, tag_hash* transposition_table, repetition_data* repetition_table, evaluation_masks* eval_masks) {
     // clear helper data structure for search
     int score;
-    init_search_heuristics(search_data);
     int alpha = ALPHA;
     int beta = BETA;
+    init_search_heuristics(search_data);
 
     time_info->stopped = 0;
 

@@ -32,8 +32,8 @@ int main() {
 
         parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -", board);
         parse_fen(start_position, board);
-        //parse_fen(repetitions, board);
-        parse_fen("8/pp1ppppp/8/8/8/8/PPPPPPPP/8 w - - ", board);
+        parse_fen(repetitions, board);
+        //parse_fen("8/pp1ppppp/8/8/8/8/PPPPPPPP/8 w - - ", board);
         // info score cp 0 depth 5 nodes 56624 pv e2a6 e6d5 c3d5 b6d5 e4d5
         // info score cp 0 depth 5 nodes 55960 pv e2a6 e6d5 c3d5 b6d5 e4d5 
         init_board_hash_key(board, hash_data);

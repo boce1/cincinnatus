@@ -58,14 +58,14 @@ void print_hash_key(Board* board, zoobrist_hash_keys* hash_data) {
 }
 
 tag_hash* create_transposition_table() {
-    tag_hash* transposition_table = (tag_hash*)malloc(HASH_SIZE * sizeof(tag_hash));
+    tag_hash* transposition_table = (tag_hash*)malloc(HAST_ENTRIES * sizeof(tag_hash));
     // Initialize the hash table entries to zero
     clear_transposition_table(transposition_table);
     return transposition_table;
 }
 void clear_transposition_table(tag_hash* transposition_table) {
     if (transposition_table) {
-        for(int i = 0; i < HASH_SIZE; i++) {
+        for(int i = 0; i < HAST_ENTRIES; i++) {
             transposition_table[i].key = 0;
             transposition_table[i].depth = 0;
             transposition_table[i].flag = 0;
@@ -84,7 +84,7 @@ int read_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data
     If the entrys flag is outside the alpha-beta window, return the bound, IT MEANS THIS NODE CAN BE PRUNED
     ALPHA-BETA WINDOWS IS alpha < score < beta
     */
-    tag_hash* entry = &transposition_table[hash_data->board_hash_key % HASH_SIZE];
+    tag_hash* entry = &transposition_table[hash_data->board_hash_key % HAST_ENTRIES];
     if(entry->key == hash_data->board_hash_key) {
         if(entry->depth >= depth) {
             int score = entry->score;
@@ -110,7 +110,7 @@ int read_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data
 }
 
 void write_hash_entry(tag_hash* transposition_table, zoobrist_hash_keys* hash_data, search_heuristics* search_data, int score, int depth, int hash_flag) {
-    tag_hash* entry = &transposition_table[hash_data->board_hash_key % HASH_SIZE];
+    tag_hash* entry = &transposition_table[hash_data->board_hash_key % HAST_ENTRIES];
     
     if(score < -LOWER_BOUND_MATE_SCORE) {
         score -= search_data->ply; 

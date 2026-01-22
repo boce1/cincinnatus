@@ -94,7 +94,7 @@ make
 
 If your OS is `Windows` and `GCC` is added to the path, you can compile with
 ```bash
-make linux_debug
+make linux_release
 ```
 
 
@@ -183,9 +183,117 @@ Alpha is variable that holds the best value for maximazing player and Beta is th
 In negamax there's no need to check fail low moves because when the side is flipped negamax prunes in the fail hight part. Meaning both players now look for fail-high cutoffs only. What would be a fail-low in minimax automatically becomes a fail-high after the sign flip.
 
 # Evaluation
-When the depth of 0 is reached negamax evaluates board. The evaluation is done by adding material score of the pieces. Also to the score is added bonus or penalty for a specific piece being on a specific square. These values are taken from piece-square tables that represent 8x8 grid. 
-- Exaple 1: Knights are stronger in the center of the board and they are weaker on the edges. 
-- Example 2: Evaluation gives more bonuses to pawn that are closer to the opposite edge because pawn will get promoted. 
+When the depth of 0 is reached negamax evaluates board. The evaluation is done by adding material score of the pieces. Also to the score is added bonus or penalty for a specific piece being on a specific square. These values are taken from piece-square tables that represent 8x8 grid. Also the score also depends of the phase of the game (opening phase, middlegame, ending phase).
+
+This engine uses a classical handcrafted evaluation function based on:
+- Material balance
+- Game phase detection (opening / middlegame / endgame)
+- Tapered (interpolated) material and positional values
+- Pawn structure evaluation
+- Piece activity and mobility
+- King safety and file structure
+
+All scores are expressed in centipawns, positive values favor White, negative values favor Black.
+
+The game phase is determined dynamically using opening material values:
+```c
+int get_game_phase_score(Board* board);
+```
+- Sums the opening material values of all remaining pieces
+- White pieces add score
+- Black pieces subtract score
+
+The resulting value (game_phase_score) is compared against predefined thresholds:
+
+| Phase      | Condition                                |
+| ---------- | ---------------------------------------- |
+| Opening    | `game_phase_score > OPENING_PHASE_SCORE` |
+| Endgame    | `game_phase_score < ENDING_PHASE_SCORE`  |
+| Middlegame | Otherwise                                |
+
+### Tapered Evaluation (Interpolation)
+Material and positional values are interpolated between opening and endgame values during the middlegame.
+```c
+int get_interpolated_material_score(int piece, int game_phase_score);
+```
+```(material_opening * game_phase_score + material_endgame * (OPENING_PHASE_SCORE - game_phase_score)) / OPENING_PHASE_SCORE```
+
+### Positional Interpolation
+```c
+int get_interpolated_positional_score(int piece, int square, int game_phase_score);
+```
+- Uses separate piece-square tables for opening and endgame
+- Smoothly blends between them in the middlegame
+
+| Piece  | Opening | Endgame |
+| ------ | ------- | ------- |
+| Pawn   | 82      | 94      |
+| Knight | 337     | 281     |
+| Bishop | 365     | 297     |
+| Rook   | 477     | 512     |
+| Queen  | 1025    | 936     |
+| King   | 12000   | 12000   |
+
+### Pawn Structure Evaluation
+- Double Pawns
+
+Penalty applied for multiple pawns on the same file:
+
+- Isolated Pawns
+
+Penalty if no friendly pawn exists on adjacent files.
+
+- Passed Pawns
+
+Bonus based on rank advancement:
+
+| Rank | Bonus |
+| ---- | ----- |
+| 2    | +5    |
+| 3    | +10   |
+| 4    | +20   |
+| 5    | +35   |
+| 6    | +60   |
+| 7    | +100  |
+| 8    | +200  |
+
+### Piece Activity & Mobility
+- Bishop
+
+Bonus for number of attacked squares:
+```count_bits(get_bishop_attacks(...))```
+
+- Queen
+
+Mobility bonus based on reachable squares.
+
+- Rooks and Files
+1. Semi-open file bonus if no friendly pawn is present
+
+2. Open file bonus if no pawns of either color are present
+
+3. Applied symmetrically for both sides
+
+### King Safety
+- King shield
+
+Bonus for friendly pieces protecting the king:
+```count_bits(king_attacks & friendly_occupancy) * KING_SHIELD_SCORE```
+
+- Open File Penalty
+
+Penalty if the king is on a semi-open or open file.
+
+### Side to move
+
+Final score is adjusted so that:
+- Positive score favors the side to move
+- Evaluation is always from the current players perspective
+
+```c
+if (board->side_to_move == black)
+    score = -score;
+```
 
 # Quiescence search
 Quiescence search is technique used in game tree search to reduce the horizon effect. It extends search in tactical positions untel they settle down or moves become quiet, then it evaluates the board. Instead of stopping the search immediately at depth 0, the engine continues searching only "noisy" moves (Captures, Checks, Promotions). 

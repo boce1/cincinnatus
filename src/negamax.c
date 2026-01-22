@@ -249,18 +249,6 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
             return 0;
         }
 
-        if(score >= beta) {
-            write_hash_entry(transposition_table, hash_keys, search_data, beta, depth, HASH_FLAG_BETA);
-
-            if(get_move_capture(move_list->moves[count]) == 0) {
-                search_data->killer_moves[1][search_data->ply] = search_data->killer_moves[0][search_data->ply];
-                search_data->killer_moves[0][search_data->ply] = move_list->moves[count];
-            }
-            // store killer moves
-
-            return beta;
-        }
-
         if(score > alpha) {
             hash_flag = HASH_FLAG_EXACT;
 
@@ -279,6 +267,19 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
             }
 
             search_data->pv_lenght[search_data->ply] = search_data->pv_lenght[search_data->ply + 1]; 
+
+            // BETA CUTOFF
+            if(score >= beta) {
+                write_hash_entry(transposition_table, hash_keys, search_data, beta, depth, HASH_FLAG_BETA);
+
+                if(get_move_capture(move_list->moves[count]) == 0) {
+                    search_data->killer_moves[1][search_data->ply] = search_data->killer_moves[0][search_data->ply];
+                    search_data->killer_moves[0][search_data->ply] = move_list->moves[count];
+                }
+                // store killer moves
+
+                return beta;
+            }
 
         }
     }

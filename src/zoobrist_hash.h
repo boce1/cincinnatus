@@ -16,11 +16,11 @@
 // no hash entry found constant, that is higher than any possible score
 #define NO_HASH_ENTRY 100000 
 
-#define HASH_SIZE 0x400000 // 4MB hash size
+#define HAST_ENTRIES 0x800000 // 8MB hash size
 // Hex: 1 0 0 0 0 0
-// Binary: 0001 0000 0000 0000 0000 0000 = 2^20
-// 2^10 = 1024 bytes = 1 KB
-// 2^10 * 1KB = 1024 * 1KB = 1 MB
+// Binary: 0001 0000 0000 0000 0000 0000 = 2^23
+// 2^13 = 8192 bytes = 8 KB
+// 2^13 * 8KB = 8192 * 8KB = 64 MB
 
 typedef struct {
     uint64_t piece_keys[12][64]; // 12 pieces, 64 squares
