@@ -6,6 +6,7 @@
 #include "perft.h"
 #include "bitboard.h"
 #include "attack.h"
+#include "nnue_eval.h"
 
 // game phases
 enum { opening, endgame, middlegame };
@@ -14,14 +15,22 @@ enum { opening, endgame, middlegame };
 enum { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
 
 
-#define DOUBLE_PAWN_PENALTY -20
-#define ISOLATED_PAWN_PENALTY -10
+#define DOUBLE_PAWN_PENALTY -10
+#define ISOLATED_PAWN_PENALTY -20
 
 #define SEMI_OPEN_FILE_SCORE 10
-#define KING_SHIELD_SCORE 5
+#define KING_SHIELD_SCORE 6
 
 #define OPENING_PHASE_SCORE 6192
 #define ENDING_PHASE_SCORE 518
+
+#define BISHOP_UNIT 4
+#define QUEEN_UNIT 9
+
+#define BISHOP_MOBILITY_OPENING 5
+#define BISHOP_MOBILITY_ENDGAME 6
+#define QUEEN_MOBILITY_OPENING 1
+#define QUEEN_MOBILITY_ENDGAME 2
 
 extern const int material_score[2][12];
 extern const int positional_score[2][6][64]; // positional piece scores [game phase][piece][square]
@@ -43,7 +52,6 @@ int evaluate(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks*
 evaluation_masks* create_evaluation_masks();
 void init_evaluation_masks(evaluation_masks* masks);
 
-
 /*
     The game phase score of the game is derived from the pieces
     not counting pawns nad kings, that are still on the board
@@ -60,5 +68,8 @@ int get_interpolated_positional_score(int piece_type, int square, int game_phase
 
 int get_material_score(int phase, int bb_piece, int game_phase_score);
 int get_positional_score(int phase, int piece_type, int square, int game_phase_score);
+
+int get_bishop_mobility(int phase);
+int get_queen_mobility(int phase);
 
 #endif // EVALUATE_H

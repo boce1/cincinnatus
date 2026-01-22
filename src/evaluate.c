@@ -318,8 +318,24 @@ int get_positional_score(int phase, int piece_type, int square, int game_phase_s
     }
     return 0;
 }
+int get_bishop_mobility(int phase) {
+    if(phase == opening) {
+        return BISHOP_MOBILITY_OPENING;
+    } else if(phase == endgame) {
+        return BISHOP_MOBILITY_ENDGAME;
+    }
+    return (BISHOP_MOBILITY_OPENING + BISHOP_MOBILITY_ENDGAME) / 2;
+}
 
-// TO DO: correct the positional score for opening and end game by interpolating values
+int get_queen_mobility(int phase) {
+    if(phase == opening) {
+        return QUEEN_MOBILITY_OPENING;
+    } else if(phase == endgame) {
+        return QUEEN_MOBILITY_ENDGAME;
+    }
+    return (QUEEN_MOBILITY_OPENING + QUEEN_MOBILITY_ENDGAME) / 2;
+}
+
 int evaluate(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, evaluation_masks* eval_masks) {
     int game_phase_s = get_game_phase_score(board);
     int game_phase = -1; // not opening, not middle, not ending
@@ -370,7 +386,7 @@ int evaluate(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks*
                     break;
                 case B:
                     score += get_positional_score(game_phase, BISHOP, square, game_phase_s);
-                    score += count_bits(get_bishop_attacks(slider_masks, square, board->occupancies[both]));
+                    score += (count_bits(get_bishop_attacks(slider_masks, square, board->occupancies[both])) - BISHOP_UNIT) * get_bishop_mobility(game_phase);
                     break;
                 case R:
                     score += get_positional_score(game_phase, ROOK, square, game_phase_s); // positioan scores
@@ -401,7 +417,7 @@ int evaluate(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks*
 
                     break;
                 case Q:
-                    score += count_bits(get_queen_attacks(slider_masks, square, board->occupancies[both]));
+                    score += (count_bits(get_queen_attacks(slider_masks, square, board->occupancies[both])) - QUEEN_UNIT) * get_queen_mobility(game_phase);
                     break;
 
 
@@ -432,7 +448,7 @@ int evaluate(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks*
                     break;
                 case b:
                     score -= get_positional_score(game_phase, BISHOP, mirror_score[square], game_phase_s);
-                    score -= count_bits(get_bishop_attacks(slider_masks, square, board->occupancies[both]));
+                    score -= (count_bits(get_bishop_attacks(slider_masks, square, board->occupancies[both])) - BISHOP_UNIT) * get_bishop_mobility(game_phase);
                     break;
                 case r:
                     score -= get_positional_score(game_phase, ROOK, mirror_score[square], game_phase_s);
@@ -463,7 +479,7 @@ int evaluate(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks*
 
                     break;
                 case q: 
-                    score -= count_bits(get_queen_attacks(slider_masks, square, board->occupancies[both]));
+                    score -= (count_bits(get_queen_attacks(slider_masks, square, board->occupancies[both])) - QUEEN_UNIT) * get_queen_mobility(game_phase);
                     break;
             }
 

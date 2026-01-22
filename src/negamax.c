@@ -95,11 +95,12 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
     int score;
     int moves_searched = 0; // moves seaarch in the move list 
     
+    search_data->pv_lenght[search_data->ply] = search_data->ply;
+    
     // repetiotion check
     if(search_data->ply && check_repetition(repetition_table, hash_keys)) {
         return 0; // draw score
     }
-
 
     int hash_flag = HASH_FLAG_ALPHA; // default flag to alpha
     int pv_node = (beta - alpha) > 1;
@@ -112,9 +113,8 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
             return score;
     }
 
-    search_data->pv_lenght[search_data->ply] = search_data->ply;
     
-    if((search_data->nodes & 255) == 0) { // check every 2048 nodes for time up
+    if((search_data->nodes & 511) == 0) { // check every 2048 nodes for time up
         communicate(time_info);
     }
 
