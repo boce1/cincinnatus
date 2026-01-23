@@ -34,7 +34,7 @@ enum { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
 
 extern const int material_score[2][12];
 extern const int positional_score[2][6][64]; // positional piece scores [game phase][piece][square]
-extern const int mirror_score[64];
+extern const int mirror_squares[64];
 
 extern const int square_bonus_index[64];
 extern const int square_bonus[8];
@@ -71,5 +71,10 @@ int get_positional_score(int phase, int piece_type, int square, int game_phase_s
 
 int get_bishop_mobility(int phase);
 int get_queen_mobility(int phase);
+
+
+//------------------------- NNUE EVALUATION WRAPPER ------------------------//
+extern const int nnue_pieces[12];
+void nnue_input(Board* board, int* pieces, int* squares);
 
 #endif // EVALUATE_H

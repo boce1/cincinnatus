@@ -15,12 +15,12 @@ void init_nnue(char *filename)
 int evaluate_nnue(int player, int *pieces, int *squares)
 {
     // call NNUE probe lib function
-    nnue_evaluate(player, pieces, squares);
+    return nnue_evaluate(player, pieces, squares);
 }
 
 // det NNUE score from FEN input
 int evaluate_fen_nnue(char *fen)
 {
     // call NNUE probe lib function
-    nnue_evaluate_fen(fen);
+    return nnue_evaluate_fen(fen);
 }

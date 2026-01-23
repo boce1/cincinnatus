@@ -55,6 +55,9 @@ CFLAGS_RELEASE = -Ofast -fomit-frame-pointer
 
 # NNUE / SIMD flags (as used in bbc)
 NNUE_FLAGS = -DUSE_SSE41 -msse4.1 -DUSE_SSSE3 -mssse3 -DUSE_SSE2 -msse2 -DUSE_SSE -msse
+
+# Windows-specific flags for static linking
+WINDOWS_FLAGS = -DDLL_EXPORT
 # ---------------------------------------------------------------------------
 
 
@@ -108,7 +111,7 @@ $(OBJ_LIN_NNUE_DIR)/%.o: $(NNUE_DIR)/%.cpp
 
 $(OBJ_WIN_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(OBJ_WIN_DIR)
-	$(CC_WIN) $(CFLAGS) $(NNUE_FLAGS) -c -o $@ $<
+	$(CC_WIN) $(CFLAGS) $(NNUE_FLAGS) $(WINDOWS_FLAGS) -c -o $@ $<
 
 $(OBJ_WIN_NNUE_DIR)/%.o: $(NNUE_DIR)/%.cpp
 	@mkdir -p $(OBJ_WIN_NNUE_DIR)
@@ -125,7 +128,7 @@ debug: linux_debug windows_debug
 # ---------------------------------------------------------------------------
 # ---- Cleanup ----
 clean:
-	rm -rf $(OBJ_ROOT)/*
+	rm -rf $(BIN_DIR)/* $(OBJ_ROOT)/*
 
 .PHONY: all linux_release linux_debug windows_release windows_debug debug clean
 # ---------------------------------------------------------------------------

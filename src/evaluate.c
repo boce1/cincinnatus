@@ -162,7 +162,7 @@ const int positional_score[2][6][64] = {
     }
 };
 
-const int mirror_score[64] = {
+const int mirror_squares[64] = {
     a1, b1, c1, d1, e1, f1, g1, h1,
     a2, b2, c2, d2, e2, f2, g2, h2,
     a3, b3, c3, d3, e3, f3, g3, h3,
@@ -194,6 +194,61 @@ const int square_bonus[8] = {
     100,  // rank 7
     200   // rank 8
 };
+
+
+//---- NNUE piece mapping ----//
+/*
+                             0  1  2  3  4  5  6  7  8  9 10 11
+piece coding in this engine: P, N, B, R, Q, K, p, n, b, r, q, k
+
+                             1  2  3  4  5  6  7  8  9 10 11 12 
+piece coding in Stockfish:   K, Q, R, B, N, P, k, q, r, b, n, p
+*/
+//                           P  N  B  R  Q  K   p   n   b  r  q  k
+const int nnue_pieces[12] = {6, 5, 4, 3, 2, 1, 12, 11, 10, 9, 8, 7};
+
+// map squares of this engine to Stockfish squares
+// a1 = 0, h1 = 7, a8 = 56, h8 = 63
+// mirror_squares will be used to convert squares
+
+
+void nnue_input(Board* board, int* pieces, int* squares) {
+    int piece, square;
+    int index = 2;
+    uint64_t bitboard;
+
+    // iterate over all piece types
+    for(int bb_piece = P; bb_piece <= k; bb_piece++) {
+        bitboard = board->pieces[bb_piece];
+
+        // iterate over all pieces of the current type
+        while(bitboard) {
+            piece = bb_piece;
+            square = get_least_significant_bit_index(bitboard);
+
+            if(piece == K) {
+                pieces[0] = nnue_pieces[piece];
+                squares[0] = mirror_squares[square];
+            } else if(piece == k) {
+                pieces[1] = nnue_pieces[piece];
+                squares[1] = mirror_squares[square];
+            } else {
+                pieces[index] = nnue_pieces[piece];
+                squares[index] = mirror_squares[square];
+                index++;
+            }
+
+            // remove the least significant bit
+            pop_bit(bitboard, square);
+        }
+
+    }
+    // Terminate the arrays
+    pieces[index] = 0;
+    squares[index] = 0;
+}
+
+//---------------------------//
 
 evaluation_masks* create_evaluation_masks() {
     evaluation_masks* masks = (evaluation_masks*)malloc(sizeof(evaluation_masks));
@@ -424,7 +479,7 @@ int evaluate(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks*
 
                 // black
                 case p:
-                    score -= get_positional_score(game_phase, PAWN, mirror_score[square], game_phase_s);
+                    score -= get_positional_score(game_phase, PAWN, mirror_squares[square], game_phase_s);
 
                     // double pawn penalty
                     pawns = count_bits(board->pieces[p] & eval_masks->file_masks[square]);
@@ -439,19 +494,19 @@ int evaluate(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks*
 
                     // passed pawn bonus
                     if((board->pieces[P] & eval_masks->passed_pawn_masks[black][square]) == 0ULL) {
-                        score -= square_bonus[square_bonus_index[mirror_score[square]]];
+                        score -= square_bonus[square_bonus_index[mirror_squares[square]]];
                     }
 
                     break;
                 case n:
-                    score -= get_positional_score(game_phase, KNIGHT, mirror_score[square], game_phase_s);
+                    score -= get_positional_score(game_phase, KNIGHT, mirror_squares[square], game_phase_s);
                     break;
                 case b:
-                    score -= get_positional_score(game_phase, BISHOP, mirror_score[square], game_phase_s);
+                    score -= get_positional_score(game_phase, BISHOP, mirror_squares[square], game_phase_s);
                     score -= (count_bits(get_bishop_attacks(slider_masks, square, board->occupancies[both])) - BISHOP_UNIT) * get_bishop_mobility(game_phase);
                     break;
                 case r:
-                    score -= get_positional_score(game_phase, ROOK, mirror_score[square], game_phase_s);
+                    score -= get_positional_score(game_phase, ROOK, mirror_squares[square], game_phase_s);
 
                     // semi open file bonus
                     if((board->pieces[p] & eval_masks->file_masks[square]) == 0ULL) {
@@ -464,7 +519,7 @@ int evaluate(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks*
 
                     break;
                 case k:
-                    score -= get_positional_score(game_phase, KING, mirror_score[square], game_phase_s);
+                    score -= get_positional_score(game_phase, KING, mirror_squares[square], game_phase_s);
 
                     // open file penalty for king
                     if((board->pieces[p] & eval_masks->file_masks[square]) == 0ULL) {

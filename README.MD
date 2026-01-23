@@ -63,6 +63,8 @@ This project also follows the tutorial series from Richard Albert (BluefeverSoft
 14.  Exploring modern chess engine architectures - Bechlor Thesis - Pieter Bijl, Anh Phi Tiet 
 - https://www.cs.vu.nl/~wanf/theses/bijl-tiet-bscthesis.pdf
 15. NNUE probe - https://github.com/dshawul/nnue-probe
+16. Introducing NNUE Evaluation - https://stockfishchess.org/blog/2020/introducing-nnue-evaluation/
+17. Stock fish evaluation guide - https://hxim.github.io/Stockfish-Evaluation-Guide/
 
 
 # Running the engine

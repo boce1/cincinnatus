@@ -9,6 +9,7 @@
 #include "zoobrist_hash.h"
 #include "perft.h"
 #include "memory_man.h"
+#include "nnue_eval.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,14 +27,15 @@ int main() {
 
     create_data_structures(&leaper_masks, &slider_masks, &board, &search_data, &time_info, &hash_data, &transposition_table, &repetition_table, &eval_masks);
     init_data_structures(leaper_masks, slider_masks, board, search_data, time_info, hash_data, transposition_table, repetition_table, eval_masks);
+    init_nnue("src/nnue/nn-04cf2b4ed1da.nnue");
 
-    int debug = 0; // set to 0 to run UCI loop
+    int debug = 1; // set to 0 to run UCI loop
     if(debug) {
 
-        parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -", board);
+        //rse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -", board);
         parse_fen(start_position, board);
-        parse_fen(repetitions, board);
-        //parse_fen("8/pp1ppppp/8/8/8/8/PPPPPPPP/8 w - - ", board);
+        //parse_fen(repetitions, board);
+        //parse_fen("p7/8/8/8/8/8/8/8 w - - ", board);
         // info score cp 0 depth 5 nodes 56624 pv e2a6 e6d5 c3d5 b6d5 e4d5
         // info score cp 0 depth 5 nodes 55960 pv e2a6 e6d5 c3d5 b6d5 e4d5 
         init_board_hash_key(board, hash_data);
@@ -58,8 +60,20 @@ int main() {
         //print_bitboard(eval_masks->passed_pawn_masks[white][get_least_significant_bit_index(board->pieces[P])]);
         //print_bitboard(eval_masks->passed_pawn_masks[black][get_least_significant_bit_index(board->pieces[p])]);
 
-        printf("\nscore %d\n", evaluate(board, leaper_masks, slider_masks, eval_masks));
+        //printf("\nscore %d\n", evaluate(board, leaper_masks, slider_masks, eval_masks));
+        
+        int pieces[33];
+        int squares[33];
 
+        // for(int i = 0; i < 33; i++) {
+        //     pieces[i] = 0;
+        //     squares[i] = 0;
+        // }
+
+        nnue_input(board, pieces, squares);
+        int score = evaluate_nnue(board->side_to_move, pieces, squares);
+        printf("score %d\n", score);
+        printf("score fen %d\n", evaluate_fen_nnue(start_position));
     } else {
         uci_loop(board, leaper_masks, slider_masks, search_data, time_info, hash_data, transposition_table, repetition_table, eval_masks);
     }

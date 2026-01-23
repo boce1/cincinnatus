@@ -4,6 +4,17 @@
 #include <string.h>
 #include <stdlib.h>
 
+//--------------------
+#ifdef _MSC_VER
+#  define USE_AVX2   1
+#  define USE_SSE41  1
+#  define USE_SSE3   1
+#  define USE_SSE2   1
+#  define USE_SSE    1
+#  define IS_64BIT   1
+#endif
+//-------------------
+
 #if defined(USE_AVX2)
 #include <immintrin.h>
 
@@ -26,14 +37,15 @@
 #include <arm_neon.h>
 #endif
 
+//-------------------
+#include "misc.h"
 #define DLL_EXPORT
 #include "nnue.h"
 #undef DLL_EXPORT
 
-#ifdef NNUE_EMBEDDED
-#include "incbin.h"
-INCBIN(Network, DefaultEvalFile);
-#endif
+#define KING(c)    ( (c) ? bking : wking )
+#define IS_KING(p) ( ((p) == wking) || ((p) == bking) )
+//-------------------
 
 // Old gcc on Windows is unable to provide a 32-byte aligned stack.
 // We need to hack around this when using AVX2 and AVX512.
@@ -196,7 +208,7 @@ INLINE unsigned make_index(int c, int s, int pc, int ksq)
 static void half_kp_append_active_indices(const Position *pos, const int c,
     IndexList *active)
 {
-  int ksq = pos->squares[c ? 1 : 0];
+  int ksq = pos->squares[c];
   ksq = orient(c, ksq);
   for (int i = 2; pos->pieces[i]; i++) {
     int sq = pos->squares[i];
@@ -205,22 +217,20 @@ static void half_kp_append_active_indices(const Position *pos, const int c,
   }
 }
 
-#if 0
 static void half_kp_append_changed_indices(const Position *pos, const int c,
     const DirtyPiece *dp, IndexList *removed, IndexList *added)
 {
-  int ksq = pos->squares[c ? 1 : 0];
+  int ksq = pos->squares[c];
   ksq = orient(c, ksq);
   for (int i = 0; i < dp->dirtyNum; i++) {
     int pc = dp->pc[i];
-    if (PIECE(pc) == king) continue;
+    if (IS_KING(pc)) continue;
     if (dp->from[i] != 64)
       removed->values[removed->size++] = make_index(c, dp->from[i], pc, ksq);
     if (dp->to[i] != 64)
       added->values[added->size++] = make_index(c, dp->to[i], pc, ksq);
   }
 }
-#endif
 
 static void append_active_indices(const Position *pos, IndexList active[2])
 {
@@ -228,26 +238,25 @@ static void append_active_indices(const Position *pos, IndexList active[2])
     half_kp_append_active_indices(pos, c, &active[c]);
 }
 
-#if 0
 static void append_changed_indices(const Position *pos, IndexList removed[2],
     IndexList added[2], bool reset[2])
 {
-  const DirtyPiece *dp = &(pos->hstack[pos->hply].dirtyPiece);
-  assert(dp->dirtyNum != 0);
+  const DirtyPiece *dp = &(pos->nnue[0]->dirtyPiece);
+  // assert(dp->dirtyNum != 0);
 
-  if (pos->hstack[pos->hply-1].accumulator.computedAccumulation) {
+  if (pos->nnue[1]->accumulator.computedAccumulation) {
     for (unsigned c = 0; c < 2; c++) {
-      reset[c] = dp->pc[0] == (int)COMBINE(c, king);
+      reset[c] = dp->pc[0] == (int)KING(c);
       if (reset[c])
         half_kp_append_active_indices(pos, c, &added[c]);
       else
         half_kp_append_changed_indices(pos, c, dp, &removed[c], &added[c]);
     }
   } else {
-    const DirtyPiece *dp2 = &(pos->hstack[pos->hply-1].dirtyPiece);
+    const DirtyPiece *dp2 = &(pos->nnue[1]->dirtyPiece);
     for (unsigned c = 0; c < 2; c++) {
-      reset[c] =   dp->pc[0] == (int)COMBINE(c, king)
-                || dp2->pc[0] == (int)COMBINE(c, king);
+      reset[c] =   dp->pc[0] == (int)KING(c)
+                || dp2->pc[0] == (int)KING(c);
       if (reset[c])
         half_kp_append_active_indices(pos, c, &added[c]);
       else {
@@ -257,7 +266,6 @@ static void append_changed_indices(const Position *pos, IndexList removed[2],
     }
   }
 }
-#endif
 
 // InputLayer = InputSlice<256 * 2>
 // out: 512 x clipped_t
@@ -369,9 +377,9 @@ INLINE bool next_idx(unsigned *idx, unsigned *offset, mask2_t *v,
     memcpy(v, (char *)mask + (*offset / 8), sizeof(mask2_t));
   }
 #ifdef IS_64BIT
-  *idx = *offset + __builtin_ctzll(*v);
+  *idx = *offset + bsf(*v);
 #else
-  *idx = *offset + __builtin_ctzl(*v);
+  *idx = *offset + bsf(*v);
 #endif
   *v &= *v - 1;
   return true;
@@ -886,7 +894,7 @@ static int16_t ft_weights alignas(64) [kHalfDimensions * FtInDims];
 // Calculate cumulative value without using difference calculation
 INLINE void refresh_accumulator(Position *pos)
 {
-  Accumulator *accumulator = &(pos->accumulator);
+  Accumulator *accumulator = &(pos->nnue[0]->accumulator);
 
   IndexList activeIndices[2];
   activeIndices[0].size = activeIndices[1].size = 0;
@@ -928,20 +936,19 @@ INLINE void refresh_accumulator(Position *pos)
 #endif
   }
 
-  accumulator->computedAccumulation = true;
+  accumulator->computedAccumulation = 1;
 }
 
-#if 0
 // Calculate cumulative value using difference calculation if possible
 INLINE bool update_accumulator(Position *pos)
 {
-  Accumulator *accumulator = &(pos->hstack[pos->hply].accumulator);
+  Accumulator *accumulator = &(pos->nnue[0]->accumulator);
   if (accumulator->computedAccumulation)
     return true;
 
   Accumulator *prevAcc;
-  if (   (pos->hply < 1 || !(prevAcc = &pos->hstack[pos->hply-1].accumulator)->computedAccumulation)
-      && (pos->hply < 2 || !(prevAcc = &pos->hstack[pos->hply-2].accumulator)->computedAccumulation) )
+  if (   (!pos->nnue[1] || !(prevAcc = &pos->nnue[1]->accumulator)->computedAccumulation)
+      && (!pos->nnue[2] || !(prevAcc = &pos->nnue[2]->accumulator)->computedAccumulation) )
     return false;
 
   IndexList removed_indices[2], added_indices[2];
@@ -1019,20 +1026,17 @@ INLINE bool update_accumulator(Position *pos)
   }
 #endif
 
-  accumulator->computedAccumulation = true;
+  accumulator->computedAccumulation = 1;
   return true;
 }
-#endif
 
 // Convert input features
 INLINE void transform(Position *pos, clipped_t *output, mask_t *outMask)
 {
-#if 0
   if (!update_accumulator(pos))
-#endif
     refresh_accumulator(pos);
 
-  int16_t (*accumulation)[2][256] = &pos->accumulator.accumulation;
+  int16_t (*accumulation)[2][256] = &pos->nnue[0]->accumulator.accumulation;
   (void)outMask; // avoid compiler warning
 
   const int perspectives[2] = { pos->player, !pos->player };
@@ -1243,13 +1247,6 @@ static bool load_eval_file(const char *evalFile)
   map_t mapping;
   size_t size;
 
-#ifdef NNUE_EMBEDDED
-  if (strcmp(evalFile, DefaultEvalFile) == 0) {
-    evalData = gNetworkData;
-    mapping = 0;
-    size = gNetworkSize;
-  } else
-#endif
   {
     FD fd = open_file(evalFile);
     if (fd == FD_ERR) return false;
@@ -1268,20 +1265,12 @@ static bool load_eval_file(const char *evalFile)
 /*
 Interfaces
 */
-static char *loadedFile = NULL;
-
 DLLExport void _CDECL nnue_init(const char* evalFile)
 {
-  if (loadedFile && strcmp(evalFile, loadedFile) == 0)
-    return;
-
-  if (loadedFile)
-    free(loadedFile);
-
   printf("Loading NNUE : %s\n", evalFile);
   fflush(stdout);
+
   if (load_eval_file(evalFile)) {
-    loadedFile = strdup(evalFile);
     printf("NNUE loaded !\n");
     fflush(stdout);
     return;
@@ -1291,9 +1280,31 @@ DLLExport void _CDECL nnue_init(const char* evalFile)
   fflush(stdout);
 }
 
-DLLExport int _CDECL nnue_evaluate(int player, int* pieces, int* squares)
+DLLExport int _CDECL nnue_evaluate(
+  int player, int* pieces, int* squares)
 {
+  NNUEdata nnue;
+  nnue.accumulator.computedAccumulation = 0;
+
   Position pos;
+  pos.nnue[0] = &nnue;
+  pos.nnue[1] = 0;
+  pos.nnue[2] = 0;
+  pos.player = player;
+  pos.pieces = pieces;
+  pos.squares = squares;
+  return nnue_evaluate_pos(&pos);
+}
+
+DLLExport int _CDECL nnue_evaluate_incremental(
+  int player, int* pieces, int* squares, NNUEdata** nnue)
+{
+  assert(nnue[0] && (uint64_t)(&nnue[0]->accumulator) % 64 == 0);
+
+  Position pos;
+  pos.nnue[0] = nnue[0];
+  pos.nnue[1] = nnue[1];
+  pos.nnue[2] = nnue[2];
   pos.player = player;
   pos.pieces = pieces;
   pos.squares = squares;
