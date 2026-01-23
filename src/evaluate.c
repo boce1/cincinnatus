@@ -325,6 +325,11 @@ void init_evaluation_masks(evaluation_masks* masks) {
             }
         }
     }
+
+    for(int i = 0; i < 33; i++) {
+        masks->nnue_squares[i] = 0;
+        masks->nnue_pieces[i] = 0;
+    }
 }
 
 
@@ -391,6 +396,19 @@ int get_queen_mobility(int phase) {
     return (QUEEN_MOBILITY_OPENING + QUEEN_MOBILITY_ENDGAME) / 2;
 }
 
+int clamp(int score, int min, int max) {
+    if(score < min) return min;
+    if(score > max) return max;
+    return score;
+}
+
+void reset_nnue_input(evaluation_masks* eval_masks) {
+    for(int i = 0; i < 33; i++) {
+        eval_masks->nnue_squares[i] = 0;
+        eval_masks->nnue_pieces[i] = 0;
+    }
+}
+
 int evaluate(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, evaluation_masks* eval_masks) {
     int game_phase_s = get_game_phase_score(board);
     int game_phase = -1; // not opening, not middle, not ending
@@ -405,147 +423,156 @@ int evaluate(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks*
     int square;
     int pawns;
 
-    for(int bb_piece = P; bb_piece <= k; bb_piece++) {
-        bitboard = board->pieces[bb_piece];
-        while(bitboard) {
-            square = get_least_significant_bit_index(bitboard);
+    if (game_phase != opening) {
+        for(int bb_piece = P; bb_piece <= k; bb_piece++) {
+            bitboard = board->pieces[bb_piece];
+            while(bitboard) {
+                square = get_least_significant_bit_index(bitboard);
 
-            score += get_material_score(game_phase, bb_piece, game_phase_s);
+                score += get_material_score(game_phase, bb_piece, game_phase_s);
 
-            // evaluate with positional score tables
-            // early queen movement leads to loss
-            switch(bb_piece) {
-                // white
-                case P:
-                    score += get_positional_score(game_phase, PAWN, square, game_phase_s);
+                // evaluate with positional score tables
+                // early queen movement leads to loss
+                switch(bb_piece) {
+                    // white
+                    case P:
+                        score += get_positional_score(game_phase, PAWN, square, game_phase_s);
 
-                    // double pawn penalty
-                    pawns = count_bits(board->pieces[P] & eval_masks->file_masks[square]);
-                    if(pawns > 1) {
-                        score += DOUBLE_PAWN_PENALTY * (pawns - 1);
-                    }
+                        // double pawn penalty
+                        pawns = count_bits(board->pieces[P] & eval_masks->file_masks[square]);
+                        if(pawns > 1) {
+                            score += DOUBLE_PAWN_PENALTY * (pawns - 1);
+                        }
 
-                    // isolated pawn penalty
-                    if((board->pieces[P] & eval_masks->isolated_masks[square]) == 0ULL) {
-                        score += ISOLATED_PAWN_PENALTY;
-                    }
+                        // isolated pawn penalty
+                        if((board->pieces[P] & eval_masks->isolated_masks[square]) == 0ULL) {
+                            score += ISOLATED_PAWN_PENALTY;
+                        }
 
-                    // passed pawn bonus
-                    if((board->pieces[p] & eval_masks->passed_pawn_masks[white][square]) == 0ULL) {
-                        score += square_bonus[square_bonus_index[square]];
-                    }
+                        // passed pawn bonus
+                        if((board->pieces[p] & eval_masks->passed_pawn_masks[white][square]) == 0ULL) {
+                            score += square_bonus[square_bonus_index[square]];
+                        }
 
-                    break;
-                case N:
-                    score += get_positional_score(game_phase, KNIGHT, square, game_phase_s);
-                    break;
-                case B:
-                    score += get_positional_score(game_phase, BISHOP, square, game_phase_s);
-                    score += (count_bits(get_bishop_attacks(slider_masks, square, board->occupancies[both])) - BISHOP_UNIT) * get_bishop_mobility(game_phase);
-                    break;
-                case R:
-                    score += get_positional_score(game_phase, ROOK, square, game_phase_s); // positioan scores
+                        break;
+                    case N:
+                        score += get_positional_score(game_phase, KNIGHT, square, game_phase_s);
+                        break;
+                    case B:
+                        score += get_positional_score(game_phase, BISHOP, square, game_phase_s);
+                        score += (count_bits(get_bishop_attacks(slider_masks, square, board->occupancies[both])) - BISHOP_UNIT) * get_bishop_mobility(game_phase);
+                        break;
+                    case R:
+                        score += get_positional_score(game_phase, ROOK, square, game_phase_s); // positioan scores
 
-                    // semi open file bonus
-                    if((board->pieces[P] & eval_masks->file_masks[square]) == 0ULL) {
-                        score += 2 * SEMI_OPEN_FILE_SCORE;
-                    }
+                        // semi open file bonus
+                        if((board->pieces[P] & eval_masks->file_masks[square]) == 0ULL) {
+                            score += 2 * SEMI_OPEN_FILE_SCORE;
+                        }
 
-                    if(((board->pieces[P] | board->pieces[p]) & eval_masks->file_masks[square]) == 0ULL) {
-                        score += SEMI_OPEN_FILE_SCORE;
-                    }
+                        if(((board->pieces[P] | board->pieces[p]) & eval_masks->file_masks[square]) == 0ULL) {
+                            score += SEMI_OPEN_FILE_SCORE;
+                        }
 
-                    break;
-                case K:
-                    score += get_positional_score(game_phase, KING, square, game_phase_s);
-                    
-                    // open file penalty for king
-                    if((board->pieces[P] & eval_masks->file_masks[square]) == 0ULL) {
-                        score -= 2 * SEMI_OPEN_FILE_SCORE;
-                    }
-                    if(((board->pieces[P] | board->pieces[p]) & eval_masks->file_masks[square]) == 0ULL) {
-                        score -= SEMI_OPEN_FILE_SCORE;
-                    }
+                        break;
+                    case K:
+                        score += get_positional_score(game_phase, KING, square, game_phase_s);
 
-                    // king safety bonus
-                    score += count_bits((get_king_attacks(leaper_masks, square) & board->occupancies[white])) * KING_SHIELD_SCORE;
+                        // open file penalty for king
+                        if((board->pieces[P] & eval_masks->file_masks[square]) == 0ULL) {
+                            score -= 2 * SEMI_OPEN_FILE_SCORE;
+                        }
+                        if(((board->pieces[P] | board->pieces[p]) & eval_masks->file_masks[square]) == 0ULL) {
+                            score -= SEMI_OPEN_FILE_SCORE;
+                        }
 
-                    break;
-                case Q:
-                    score += (count_bits(get_queen_attacks(slider_masks, square, board->occupancies[both])) - QUEEN_UNIT) * get_queen_mobility(game_phase);
-                    break;
+                        // king safety bonus
+                        score += count_bits((get_king_attacks(leaper_masks, square) & board->occupancies[white])) * KING_SHIELD_SCORE;
+
+                        break;
+                    case Q:
+                        score += (count_bits(get_queen_attacks(slider_masks, square, board->occupancies[both])) - QUEEN_UNIT) * get_queen_mobility(game_phase);
+                        break;
 
 
 
-                // black
-                case p:
-                    score -= get_positional_score(game_phase, PAWN, mirror_squares[square], game_phase_s);
+                    // black
+                    case p:
+                        score -= get_positional_score(game_phase, PAWN, mirror_squares[square], game_phase_s);
 
-                    // double pawn penalty
-                    pawns = count_bits(board->pieces[p] & eval_masks->file_masks[square]);
-                    if(pawns > 1) {
-                        score -= DOUBLE_PAWN_PENALTY * (pawns - 1);
-                    }
+                        // double pawn penalty
+                        pawns = count_bits(board->pieces[p] & eval_masks->file_masks[square]);
+                        if(pawns > 1) {
+                            score -= DOUBLE_PAWN_PENALTY * (pawns - 1);
+                        }
 
-                    // isolated pawn penalty
-                    if((board->pieces[p] & eval_masks->isolated_masks[square]) == 0ULL) {
-                        score -= ISOLATED_PAWN_PENALTY;
-                    }
+                        // isolated pawn penalty
+                        if((board->pieces[p] & eval_masks->isolated_masks[square]) == 0ULL) {
+                            score -= ISOLATED_PAWN_PENALTY;
+                        }
 
-                    // passed pawn bonus
-                    if((board->pieces[P] & eval_masks->passed_pawn_masks[black][square]) == 0ULL) {
-                        score -= square_bonus[square_bonus_index[mirror_squares[square]]];
-                    }
+                        // passed pawn bonus
+                        if((board->pieces[P] & eval_masks->passed_pawn_masks[black][square]) == 0ULL) {
+                            score -= square_bonus[square_bonus_index[mirror_squares[square]]];
+                        }
 
-                    break;
-                case n:
-                    score -= get_positional_score(game_phase, KNIGHT, mirror_squares[square], game_phase_s);
-                    break;
-                case b:
-                    score -= get_positional_score(game_phase, BISHOP, mirror_squares[square], game_phase_s);
-                    score -= (count_bits(get_bishop_attacks(slider_masks, square, board->occupancies[both])) - BISHOP_UNIT) * get_bishop_mobility(game_phase);
-                    break;
-                case r:
-                    score -= get_positional_score(game_phase, ROOK, mirror_squares[square], game_phase_s);
+                        break;
+                    case n:
+                        score -= get_positional_score(game_phase, KNIGHT, mirror_squares[square], game_phase_s);
+                        break;
+                    case b:
+                        score -= get_positional_score(game_phase, BISHOP, mirror_squares[square], game_phase_s);
+                        score -= (count_bits(get_bishop_attacks(slider_masks, square, board->occupancies[both])) - BISHOP_UNIT) * get_bishop_mobility(game_phase);
+                        break;
+                    case r:
+                        score -= get_positional_score(game_phase, ROOK, mirror_squares[square], game_phase_s);
 
-                    // semi open file bonus
-                    if((board->pieces[p] & eval_masks->file_masks[square]) == 0ULL) {
-                        score -= 2 * SEMI_OPEN_FILE_SCORE;
-                    }
+                        // semi open file bonus
+                        if((board->pieces[p] & eval_masks->file_masks[square]) == 0ULL) {
+                            score -= 2 * SEMI_OPEN_FILE_SCORE;
+                        }
 
-                    if(((board->pieces[P] | board->pieces[p]) & eval_masks->file_masks[square]) == 0ULL) {
-                        score -= SEMI_OPEN_FILE_SCORE;
-                    }
+                        if(((board->pieces[P] | board->pieces[p]) & eval_masks->file_masks[square]) == 0ULL) {
+                            score -= SEMI_OPEN_FILE_SCORE;
+                        }
 
-                    break;
-                case k:
-                    score -= get_positional_score(game_phase, KING, mirror_squares[square], game_phase_s);
+                        break;
+                    case k:
+                        score -= get_positional_score(game_phase, KING, mirror_squares[square], game_phase_s);
 
-                    // open file penalty for king
-                    if((board->pieces[p] & eval_masks->file_masks[square]) == 0ULL) {
-                        score += 2 * SEMI_OPEN_FILE_SCORE;
-                    }
+                        // open file penalty for king
+                        if((board->pieces[p] & eval_masks->file_masks[square]) == 0ULL) {
+                            score += 2 * SEMI_OPEN_FILE_SCORE;
+                        }
 
-                    if(((board->pieces[P] | board->pieces[p]) & eval_masks->file_masks[square]) == 0ULL) {
-                        score += SEMI_OPEN_FILE_SCORE;
-                    }
+                        if(((board->pieces[P] | board->pieces[p]) & eval_masks->file_masks[square]) == 0ULL) {
+                            score += SEMI_OPEN_FILE_SCORE;
+                        }
 
-                    score -= count_bits((get_king_attacks(leaper_masks, square) & board->occupancies[black])) * KING_SHIELD_SCORE;
+                        score -= count_bits((get_king_attacks(leaper_masks, square) & board->occupancies[black])) * KING_SHIELD_SCORE;
 
-                    break;
-                case q: 
-                    score -= (count_bits(get_queen_attacks(slider_masks, square, board->occupancies[both])) - QUEEN_UNIT) * get_queen_mobility(game_phase);
-                    break;
+                        break;
+                    case q: 
+                        score -= (count_bits(get_queen_attacks(slider_masks, square, board->occupancies[both])) - QUEEN_UNIT) * get_queen_mobility(game_phase);
+                        break;
+                }
+
+                pop_bit(bitboard, square);
             }
-
-            pop_bit(bitboard, square);
         }
+    } 
+
+    if(game_phase == middlegame) {
+        score = clamp(score, -MIDDLE_GAME_CLAMP_LIMIT, MIDDLE_GAME_CLAMP_LIMIT);
+    } else if (game_phase == endgame) {
+        score = clamp(score, -LATE_GAME_CLAMP_LIMIT, LATE_GAME_CLAMP_LIMIT);
     }
 
-    if(board->side_to_move == white) {
-        return score;
-    } else if (board->side_to_move == black) {
-        return -score;
-    }
-    return 0;
+    score = (board->side_to_move == white) ? score : -score;
+
+    reset_nnue_input(eval_masks);
+    nnue_input(board, eval_masks->nnue_pieces, eval_masks->nnue_squares);
+    int nnue_score = evaluate_nnue(board->side_to_move, eval_masks->nnue_pieces, eval_masks->nnue_squares) * 5 / 4; // scale NNUE score
+
+    return nnue_score + score;
 }

@@ -32,6 +32,9 @@ enum { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
 #define QUEEN_MOBILITY_OPENING 1
 #define QUEEN_MOBILITY_ENDGAME 2
 
+#define MIDDLE_GAME_CLAMP_LIMIT 30
+#define LATE_GAME_CLAMP_LIMIT 60
+
 extern const int material_score[2][12];
 extern const int positional_score[2][6][64]; // positional piece scores [game phase][piece][square]
 extern const int mirror_squares[64];
@@ -45,6 +48,9 @@ typedef struct {
     uint64_t rank_masks[64]; // masks for each rank
     uint64_t isolated_masks[64]; // masks for isolated pawns
     uint64_t passed_pawn_masks[2][64]; // masks for passed pawns
+
+    int nnue_squares[33]; // mapping of squares for nnue input
+    int nnue_pieces[33]; // mapping of pieces for nnue input
 } evaluation_masks;
 
 int evaluate(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, evaluation_masks* eval_masks);
@@ -72,6 +78,8 @@ int get_positional_score(int phase, int piece_type, int square, int game_phase_s
 int get_bishop_mobility(int phase);
 int get_queen_mobility(int phase);
 
+int clamp(int score, int min, int max);
+void reset_nnue_input(evaluation_masks* eval_masks);
 
 //------------------------- NNUE EVALUATION WRAPPER ------------------------//
 extern const int nnue_pieces[12];

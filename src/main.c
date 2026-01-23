@@ -27,14 +27,22 @@ int main() {
 
     create_data_structures(&leaper_masks, &slider_masks, &board, &search_data, &time_info, &hash_data, &transposition_table, &repetition_table, &eval_masks);
     init_data_structures(leaper_masks, slider_masks, board, search_data, time_info, hash_data, transposition_table, repetition_table, eval_masks);
-    init_nnue("src/nnue/nn-04cf2b4ed1da.nnue");
+    
+    //init_nnue("src/nnue/nn-04cf2b4ed1da.nnue");
+    char* nnue_path = find_nnue_path();
+    if (!nnue_path) {
+        fprintf(stderr, "Failed to locate NNUE file\n");
+    } else {
+        init_nnue(nnue_path);
+        free(nnue_path);
+    }
 
-    int debug = 1; // set to 0 to run UCI loop
+    int debug = 0; // set to 0 to run UCI loop
     if(debug) {
 
-        //rse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -", board);
-        parse_fen(start_position, board);
-        //parse_fen(repetitions, board);
+        //parse_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -", board);
+        //parse_fen(start_position, board);
+        parse_fen(repetitions, board);
         //parse_fen("p7/8/8/8/8/8/8/8 w - - ", board);
         // info score cp 0 depth 5 nodes 56624 pv e2a6 e6d5 c3d5 b6d5 e4d5
         // info score cp 0 depth 5 nodes 55960 pv e2a6 e6d5 c3d5 b6d5 e4d5 
@@ -62,18 +70,24 @@ int main() {
 
         //printf("\nscore %d\n", evaluate(board, leaper_masks, slider_masks, eval_masks));
         
-        int pieces[33];
-        int squares[33];
+        // int pieces[33];
+        // int squares[33];
+        // // for(int i = 0; i < 33; i++) {
+        // //     pieces[i] = 0;
+        // //     squares[i] = 0;
+        // // }
 
-        // for(int i = 0; i < 33; i++) {
-        //     pieces[i] = 0;
-        //     squares[i] = 0;
-        // }
+        // nnue_input(board, pieces, squares);
+        // int score = evaluate_nnue(board->side_to_move, pieces, squares);
+        // printf("score %d\n", score);
+        // printf("score fen %d\n", evaluate_fen_nnue(start_position));
 
-        nnue_input(board, pieces, squares);
-        int score = evaluate_nnue(board->side_to_move, pieces, squares);
-        printf("score %d\n", score);
-        printf("score fen %d\n", evaluate_fen_nnue(start_position));
+        // printf("static eval %d\n", evaluate(board, leaper_masks, slider_masks, eval_masks));
+
+        int score = evaluate(board, leaper_masks, slider_masks, eval_masks);
+        parse_position("position startpos moves e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 d2d4 e5d4 f3d4 f8c5 d4c6 d7c6 e1g1 d8e7 c4f7", board, leaper_masks, slider_masks, search_data, hash_data, repetition_table);
+        score = evaluate(board, leaper_masks, slider_masks, eval_masks);
+
     } else {
         uci_loop(board, leaper_masks, slider_masks, search_data, time_info, hash_data, transposition_table, repetition_table, eval_masks);
     }
