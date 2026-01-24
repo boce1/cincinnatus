@@ -540,5 +540,6 @@ int evaluate(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks*
     int nnue_score = evaluate_nnue(board->side_to_move, eval_masks->nnue_pieces, eval_masks->nnue_squares) * 5 / 4; // scale NNUE score
 
     if (abs(nnue_score) > 2000) return nnue_score; // trust NNUE for big advantages
-    return (nnue_score * 0.8) + (score * 0.2); 
+    return (nnue_score * 0.9) + (score * 0.1);    
+
 }

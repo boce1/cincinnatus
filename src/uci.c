@@ -175,7 +175,11 @@ void parse_go(char* command, Board* board, leaper_moves_masks* leaper_masks, sli
         else time_info->time /= time_info->movestogo;
         
         // "illegal" (empty) move bug fix
-        if (time_info->time > 1500) time_info->time -= 100;
+        //if (time_info->time > 1500) time_info->time -= 100;
+
+        // margin of safety
+        time_info->time -= 150;
+
         /*
             Engines dont want to use 100% of the remaining time, because small inaccuracies in timing or 
             delays in processing could make the engine run out of time before it makes a move.
@@ -272,11 +276,11 @@ void search_position(int depth, Board* board, leaper_moves_masks* leaper_masks, 
         }
 
         int remaining = time_info->stoptime - get_time_ms();
-        if (time_info->timeset && remaining < 10) break; // shallow-only
+        if (time_info->timeset && get_time_ms() > (time_info->stoptime - 20)) break; // shallow-only
 
         search_data->follow_pv = 1;
 
-        if (current_depth==1 && time_info->timeset && (time_info->stoptime - get_time_ms()) < 500) {
+        if (current_depth==1 && time_info->timeset && get_time_ms() > (time_info->stoptime - 500)) {
             score = negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, repetition_table, eval_masks, alpha, beta, 1);
             break;
         } else {
