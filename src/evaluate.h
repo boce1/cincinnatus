@@ -32,9 +32,6 @@ enum { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
 #define QUEEN_MOBILITY_OPENING 1
 #define QUEEN_MOBILITY_ENDGAME 2
 
-#define MIDDLE_GAME_CLAMP_LIMIT 30
-#define LATE_GAME_CLAMP_LIMIT 60
-
 extern const int material_score[2][12];
 extern const int positional_score[2][6][64]; // positional piece scores [game phase][piece][square]
 extern const int mirror_squares[64];

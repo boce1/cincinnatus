@@ -39,6 +39,25 @@ int parse_move(char* move_string, Board* board, leaper_moves_masks* leaper_masks
     return 0; // illegal move
 }
 
+
+void print_valid_uci_move(int move) {
+    int source = get_move_source(move);
+    int target = get_move_target(move);
+    int promoted = get_move_promoted(move);
+
+    printf("%s%s", square_to_cordinates[source], square_to_cordinates[target]);
+
+    if (promoted) {
+
+        char promo_char = 'q';
+        if (promoted == n || promoted == N) promo_char = 'n';
+        if (promoted == b || promoted == B) promo_char = 'b';
+        if (promoted == r || promoted == R) promo_char = 'r';
+        
+        printf("%c", promo_char);
+    }
+}
+
 /*
 for UCI commands are being executed in terminal
 each command starts with "position"
@@ -257,7 +276,7 @@ void search_position(int depth, Board* board, leaper_moves_masks* leaper_masks, 
 
         search_data->follow_pv = 1;
 
-        if (current_depth==1 && time_info->timeset && (time_info->stoptime - get_time_ms()) < 300) {
+        if (current_depth==1 && time_info->timeset && (time_info->stoptime - get_time_ms()) < 500) {
             score = negamax(board, leaper_masks, slider_masks, search_data, time_info, hash_keys, transposition_table, repetition_table, eval_masks, alpha, beta, 1);
             break;
         } else {
@@ -276,15 +295,13 @@ void search_position(int depth, Board* board, leaper_moves_masks* leaper_masks, 
 
         printf("info score cp %d depth %d nodes %ld pv ", score, current_depth, search_data->nodes);
         for(int i = 0; i < search_data->pv_lenght[0]; i++) {
-            printf("%s%s ", square_to_cordinates[get_move_source(search_data->pv_table[0][i])],
-                            square_to_cordinates[get_move_target(search_data->pv_table[0][i])]);
+            print_valid_uci_move(search_data->pv_table[0][i]);
+            printf(" ");
         }
         printf("\n");
     }
 
-    int source_square = get_move_source(search_data->pv_table[0][0]);
-    int target_square = get_move_target(search_data->pv_table[0][0]);
-    
-    //printf("\n");
-    printf("bestmove %s%s\n", square_to_cordinates[source_square], square_to_cordinates[target_square]);    
+    printf("bestmove ");
+    print_valid_uci_move(search_data->pv_table[0][0]);
+    printf("\n");
 }

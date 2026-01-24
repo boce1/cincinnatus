@@ -25,7 +25,7 @@ int quiescence(Board* board, leaper_moves_masks* leaper_masks, slider_moves_mask
     search_heuristics* search_data, time_controls* time_info, 
     zoobrist_hash_keys* hash_keys, repetition_data* repetition_table, evaluation_masks* eval_masks,
     int alpha, int beta) {
-    if((search_data->nodes & 255) == 0) { // check every 2048 nodes for time up
+    if((search_data->nodes & 2047) == 0) { // check every 2048 nodes for time up
         communicate(time_info);
     }
 
@@ -114,7 +114,7 @@ int negamax(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* 
     }
 
     
-    if((search_data->nodes & 511) == 0) { // check every 2048 nodes for time up
+    if((search_data->nodes & 2047) == 0) { // check every 2048 nodes for time up
         communicate(time_info);
     }
 

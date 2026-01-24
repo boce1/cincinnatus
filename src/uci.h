@@ -33,4 +33,6 @@ or until it finds a checkmate
 or until the max depht wich is 64 plies
 */
 
+void print_valid_uci_move(int move);
+
 #endif // UCI_H

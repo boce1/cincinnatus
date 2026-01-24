@@ -67,18 +67,24 @@ int input_waiting() {
 }
 
 void read_input(time_controls* info) {
-    int bytes;
-    char input[256] = "", *endc;
+   char input[1024];
 
+    // Only enter if there is actually data to read
     if (input_waiting()) {
-		info->stopped = 1;
-		do {
-		  bytes=read(fileno(stdin),input,256);
-		} while (bytes<0); // This code ensures the engine eats the input from the buffer so the next check doesn’t read old data.
-		endc = strchr(input,'\n');
-		if (endc) *endc=0;
+        // Use fgets to read the full line
+        if (!fgets(input, sizeof(input), stdin)) return;
 
-		return;
+        // 1. Handle Pings (MUST NOT STOP SEARCH)
+        if (strncmp(input, "isready", 7) == 0) {
+            printf("readyok\n");
+            fflush(stdout); // Tell the GUI we are alive
+            return; 
+        }
+
+        // 2. Handle Stop/Quit (MUST STOP SEARCH)
+        if (strncmp(input, "stop", 4) == 0 || strncmp(input, "quit", 4) == 0) {
+            info->stopped = 1;
+        }
     }
 }
 
