@@ -537,7 +537,7 @@ int evaluate(Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks*
 
     reset_nnue_input(eval_masks);
     nnue_input(board, eval_masks->nnue_pieces, eval_masks->nnue_squares);
-    int nnue_score = evaluate_nnue(board->side_to_move, eval_masks->nnue_pieces, eval_masks->nnue_squares);
+    int nnue_score = evaluate_nnue(board->side_to_move, eval_masks->nnue_pieces, eval_masks->nnue_squares) * 5 / 4; // scale NNUE score to be more influential
 
     if (abs(nnue_score) > 1000) return nnue_score; // trust NNUE for big advantages
     return (nnue_score * 0.9) + (score * 0.1);    
