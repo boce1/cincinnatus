@@ -30,8 +30,11 @@ int main() {
     
     //init_nnue("src/nnue/nn-04cf2b4ed1da.nnue");
     char* nnue_path = find_nnue_path();
+    printf("NNUE path: %s\n", nnue_path);
     if (!nnue_path) {
         fprintf(stderr, "Failed to locate NNUE file\n");
+        free_data_structures(leaper_masks, slider_masks, board, search_data, time_info, hash_data, transposition_table, repetition_table, eval_masks);
+        return 1;
     } else {
         init_nnue(nnue_path);
         free(nnue_path);

@@ -15,7 +15,7 @@
     #include <limits.h>
 #endif
 
-#define NNUE_RELATIVE_PATH "src/nnue/nn-04cf2b4ed1da.nnue"
+#define NNUE_RELATIVE_PATH "nn-04cf2b4ed1da.nnue"
 
 // init NNUE
 void init_nnue(char *filename)
