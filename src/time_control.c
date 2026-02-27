@@ -90,7 +90,7 @@ void read_input(time_controls* info) {
 
 // bridge function to interact between the search and GUI
 void communicate(time_controls* info) {
-    if(info->timeset && get_time_ms() > info->stoptime) { // set the stop flag if time is up
+    if(info->timeset && get_time_ms() >= info->stoptime) { // set the stop flag if time is up
         info->stopped = 1;
     }
 

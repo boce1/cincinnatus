@@ -275,7 +275,6 @@ void search_position(int depth, Board* board, leaper_moves_masks* leaper_masks, 
             break;
         }
 
-        int remaining = time_info->stoptime - get_time_ms();
         if (time_info->timeset && get_time_ms() > (time_info->stoptime - 20)) break; // shallow-only
 
         search_data->follow_pv = 1;
@@ -297,15 +296,21 @@ void search_position(int depth, Board* board, leaper_moves_masks* leaper_masks, 
         beta = score + WINDOW_VALUE;
         // -----
 
-        printf("info score cp %d depth %d nodes %ld pv ", score, current_depth, search_data->nodes);
-        for(int i = 0; i < search_data->pv_lenght[0]; i++) {
-            print_valid_uci_move(search_data->pv_table[0][i]);
-            printf(" ");
+        if(search_data->pv_lenght[0] > 0) { // at least one move was found at the current depth
+            printf("info score cp %d depth %d nodes %ld pv ", score, current_depth, search_data->nodes);
+            for(int i = 0; i < search_data->pv_lenght[0]; i++) {
+                print_valid_uci_move(search_data->pv_table[0][i]);
+                printf(" ");
+            }
+            printf("\n");
         }
-        printf("\n");
     }
 
     printf("bestmove ");
-    print_valid_uci_move(search_data->pv_table[0][0]);
+    if(search_data->pv_table[0][0] == 0) {
+        printf("0000\n"); // no legal moves, should be checkmate or stalemate or not enough time to find a move
+    } else {
+        print_valid_uci_move(search_data->pv_table[0][0]);
+    }
     printf("\n");
 }
