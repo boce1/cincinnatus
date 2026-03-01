@@ -91,15 +91,16 @@ git clone https://github.com/boce1/cincinnatus.git
 cd cincinnatus
 ```
 
-To compile the realise vesrion
+To compile the release vesrions for `Linux` and `Windows` `(Linux only)`
 ```bash
 make
 ```
 
-If your OS is `Windows` and `GCC` is added to the path, you can compile with
+To compile the release version only for native OS `(Linux and Windows)`
 ```bash
 make linux_release
 ```
+The reason for that is that the `makefile` includes the `gcc`, `g++`, `x86_64-w64-mingw32-gcc`, `x86_64-w64-mingw32-g++` compilers and `x86_64-w64-mingw32-gcc`, `x86_64-w64-mingw32-g++` works only for `Linux`. To compile the release version only for your OS the `make` command only needs `linux_release`. 
 
 
 After compilation load the executable into the UCI GUI.
