@@ -187,6 +187,7 @@ Alpha is variable that holds the best value for maximazing player and Beta is th
 In negamax there's no need to check fail low moves because when the side is flipped negamax prunes in the fail hight part. Meaning both players now look for fail-high cutoffs only. What would be a fail-low in minimax automatically becomes a fail-high after the sign flip.
 
 # Evaluation
+## Static Evaluation
 When the depth of 0 is reached negamax evaluates board. The evaluation is done by adding material score of the pieces. Also to the score is added bonus or penalty for a specific piece being on a specific square. These values are taken from piece-square tables that represent 8x8 grid. Also the score also depends of the phase of the game (opening phase, middlegame, ending phase).
 
 This engine uses a classical handcrafted evaluation function based on:
@@ -297,6 +298,34 @@ Final score is adjusted so that:
 ```c
 if (board->side_to_move == black)
     score = -score;
+```
+
+## NNUE Evaluation
+
+In addition to the classical handcrafted evaluation, this engine implements **NNUE** (Efficiently Updatable Neural Network). Originally popularized in Shogi and later adopted by *Stockfish*, NNUE provides the engine with deep, non-linear pattern recognition that is difficult to capture with manual code.
+
+### What is NNUE?
+NNUE is a shallow neural network designed to run efficiently on a CPU without requiring a GPU. Its "Efficiently Updatable" nature means that when a piece moves, the engine doesn't recompute the entire network. Instead, it only updates the specific neurons affected by the piece leaving its old square and arriving at the new one.
+
+### How it Works
+The network architecture typically consists of:
+* **Input Layer (Feature Transformer):** Maps the positions of all pieces relative to the kings.
+* **Hidden Layers:** Small, optimized layers that process these features to find complex relationships (like King safety or piece coordination).
+* **Output Layer:** A single value representing the evaluation in centipawns.
+
+### Hybrid Evaluation Logic
+To ensure the engine maintains both the strategic intuition of a neural network and the rock-solid material counting of a classical evaluator, a **Hybrid** approach is used. 
+
+The engine uses a "Trust but Verify" system:
+1.  **Decisive Advantage:** If NNUE detects a massive advantage ($|score| > 1000$), the engine trusts the NNUE entirely to find the quickest win.
+2.  **Weighted Blending:** In balanced positions, the score is a blend of **90% NNUE** and **10% Classical** evaluation. This prevents the "blind spots" that can occasionally occur in neural networks.
+
+```c
+// Hybrid evaluation blending logic
+if (abs(nnue_score) > 1000) {
+    return nnue_score; // Trust NNUE for big advantages
+}
+return (nnue_score * 0.9) + (score * 0.1);
 ```
 
 # Quiescence search
