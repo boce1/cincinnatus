@@ -74,10 +74,19 @@ This engine works with UCI protocol and every GUI that supports UCI can start th
 - Tarrasch
 - Cute Chess
 
-
 There's executables in ```bin``` folder. 
 - For ***Windows*** load the ```cincinnatus_windows_release.exe```
 - For ***Linux distros*** load the ```cincinnatus_linux_release```
+
+## Running the cincinnatusGUI
+I made the UCI chess GUI for purpouse being testing the engine.
+
+- The source code for the GUI: https://github.com/boce1/pyuci-chessgui.git
+- Download link for the binaries for `Linux` and .exe for `Windows`: https://github.com/boce1/pyuci-chessgui/releases
+
+
+![gui screenshot](pics/gui.png)
+
 
 ## Build Instructions (If the executables are not system compatable)
 ### Requirements
@@ -96,7 +105,7 @@ To compile the release vesrions for `Linux` and `Windows` `(Linux only)`
 make
 ```
 
-To compile the release version only for native OS `(Linux and Windows)`
+To compile the release version for your OS `(Linux and Windows)`
 ```bash
 make linux_release
 ```
