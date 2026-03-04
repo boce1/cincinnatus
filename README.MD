@@ -47,7 +47,7 @@ This project also follows the tutorial series from Richard Albert (BluefeverSoft
 - https://www.tckerrigan.com/Chess/TSCP/
 7. UCI protocol
 - https://www.chessprogramming.org/UCI
-- Weiss chess engine by Richard Olbert: http://github.com/TerjeKir/weiss
+- VICE chess engine by Richard Allbert: https://github.com/bluefeversoft/vice
 8. FEN
 - https://www.chess.com/terms/fen-chess
 9. Late move reduction
