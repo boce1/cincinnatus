@@ -7,7 +7,7 @@
 - [**Negamax Search**](#negamax) – Implements the negamax variant of minimax with alpha-beta pruning.  
 - [**Quiescence Search**](#quiescence-search) – Extends leaf nodes to reduce the horizon effect.  
 - [**Move Ordering**](#move-ordering) – Includes killer moves, history heuristics, and principal variation (PV) search.  
-- [**Evaluation Function**](#evaluation) – Basic material + positional evaluation (can be extended).  
+- [**Hybrid Evaluation Function with Stockfish NNUE**](#evaluation) – Basic material + positional evaluation + NNUE.  
 - [**UCI Protocol**](#uci-protocol) – Communicates with GUIs like **Arena**, **CuteChess**, or **lichess-bot**.  
 - [**Perft Testing**](#perft) – Verify correctness of move generation.  
 - [**Principle variation search**](#pv-search) - Improves the performance up to 10%
@@ -120,6 +120,9 @@ This bitboard chess engine is named after the statesman Lucius Quinctius Cincinn
 Under certain conditions, the idea of a dictator can sound appealing, like when a democracy isn’t functioning as it should due to corruption or political polarization. People may believe the solution is a "benevolent dictator"— a leader who only uses their absolute power for the common good. But can such a leader actually exist in today’s world?
 
 TED-Ed video essay: "Has there ever been a good dictator?" - Stephanie Honchell Smith (https://www.youtube.com/watch?v=kkZ7B-Fv-ck&t=11s)
+
+# ELO rating
+Rought estimation of ELO for this engine is in range 2200 to 2500.
 
 # Bitboards
 Bitboards (also called bitmaps) are unsigned 64-bit integers. They are used to represent the state of the board. This method offers great computational speed because bitboard can be manipulated with binary operation. Modern computers are 64-bit arhitectures wich allows ussability of 64 bit registers. Binary operations with 64bit registers are much faster than the standard 2d representation of the board.
