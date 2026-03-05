@@ -62,10 +62,10 @@ This project also follows the tutorial series from Richard Albert (BluefeverSoft
 - https://web.archive.org/web/20071031100051/http://www.brucemo.com/compchess/programming/hashing.htm
 14.  Exploring modern chess engine architectures - Bechlor Thesis - Pieter Bijl, Anh Phi Tiet 
 - https://www.cs.vu.nl/~wanf/theses/bijl-tiet-bscthesis.pdf
-15. NNUE probe - https://github.com/dshawul/nnue-probe
+15. - **NNUE probe:** Used to integrate Stockfish NNUE - [dshawul/nnue-probe](https://github.com/dshawul/nnue-probe).
 16. Introducing NNUE Evaluation - https://stockfishchess.org/blog/2020/introducing-nnue-evaluation/
 17. Stock fish evaluation guide - https://hxim.github.io/Stockfish-Evaluation-Guide/
-
+18. `nn-04cf2b4ed1da.nnue` NNUE - https://github.com/official-stockfish/networks
 
 # Running the engine
 This engine works with UCI protocol and every GUI that supports UCI can start the bot. The most popular GUI for chess engines are:
