@@ -66,6 +66,8 @@ This project also follows the tutorial series from Richard Albert (BluefeverSoft
 16. Introducing NNUE Evaluation - https://stockfishchess.org/blog/2020/introducing-nnue-evaluation/
 17. Stock fish evaluation guide - https://hxim.github.io/Stockfish-Evaluation-Guide/
 18. `nn-04cf2b4ed1da.nnue` NNUE - https://github.com/official-stockfish/networks
+19. Stockfish Developers. NNUE PyTorch Documentation. GitHub. https://github.com/official-stockfish/nnue-pytorch/blob/master/docs/nnue.md
+20. Lombardo, Martín Emiliano. Feature set analysis for chess NNUE networks. Tesis de Licenciatura.
 
 # Running the engine
 This engine works with UCI protocol and every GUI that supports UCI can start the bot. The most popular GUI for chess engines are:
@@ -326,6 +328,81 @@ The network architecture typically consists of:
 * **Hidden Layers:** Small, optimized layers that process these features to find complex relationships (like King safety or piece coordination).
 * **Output Layer:** A single value representing the evaluation in centipawns.
 
+### Какво е NNUE и как работи
+Ефективно обновяема невронна мрежа (NNUE) представлява специализирана
+архитектура, която оптимизира процеса на оценка в стратегически игри. Нейното
+основно предимство е способността да извършва изчисления изключително бързо, като
+се възползва от факта, че между две последователни състояния на играта промените в
+позициите са минимални. Вместо да преизчислява мрежата от нула, архитектурата
+актуализира само тези части от входния слой, които са пряко засегнати от последния
+ход.
+
+
+Принципите, по които функционира NNUE са следните
+- Оскъдност на входните данни (Sparsity) : 
+Мрежата трябва да има относително малък брой ненулеви входове. Мрежата не
+пресмята всичко, защото тя е проектирана така, че да филтрира излишната информация
+и да работи само с ненулеви данни. Основното правило е колкото по-голяма става
+мрежата, толкова по-малък процент от входовете ѝ трябва да бъдат активни. При най-
+добрите съвременни модели тази активност е минимум 0,1%. Тъй като като софтуерът
+на практика прескача 99,9% от възможните изчисления, времето за оценка на позицията
+остава изключително кратко.
+- Инкрементално обновяване : 
+Входовете трябва да се променят минимално между две последователни оценки.
+Тъй като в шаха един ход променя състоянието на дъската съвсем малко, това позволява
+на софтуера ефективно да обновява само част от мрежата, вместо да я преизчислява
+изцяло. Макър и незадължителен, този принцип дава подобрение в производителността.
+- Опростеност и целочислена аритметика : 
+Мрежата трябва да е достатъчно проста, за да позволява изчисления с ниска
+точност в областта на целите числа. Това осигурява максимална скорост върху
+стандартен хардуер и прави модела идеален за процесорна обработка.
+
+
+Когато се изпълнява алгоритъм за търсене в дълбочина, състоянието на
+позицията се обновява всеки път, когато алгоритъмът прави и отменя ходове,
+обикновено преди и след рекурсията. NNUE са проектирани да работят с този вид
+търсене, тъй като всеки път, когато алгоритъмът направи (или отмени) ход, промените в
+позицията са минимални, защото се засягат най-много две фигури общо, което
+означава, че количеството характеристики, които стават активни или неактивни, също е
+минимално. Това е показано на следната фигура (източник [20]).
+
+![partialtree](pics/partial_tree.png)
+
+За максимално оползотворяване на тази ефективност по време на самото
+търсене, не е необходимо изчисляването на всички активни характеристики в дадена
+позиция преди цялостната оценка на мрежата. Вместо това се използва така нареченият
+„акумулатор“ - структурен буфер в паметта, който съхранява натрупания изход от
+първия линеен слой. Вместо всичко да се преизчислява от нулата, състоянието на този
+акумулатор просто се актуализира при всяка промяна на позицията. Тъй като линейните
+слоеве могат да бъдат изчислени чрез прибавяне на съответните колони от матрицата на
+теглата към изхода, процесът се опростява значително. Когато дадена характеристика
+стане активна или неактивна (например при преместване на фигура), е необходимо
+само добавяне или изваждане на съответната колона от текущите стойности в
+акумулатора. Така, когато впоследствие се изисква крайна оценка, трябва да се изчисляединствено следващите слоеве на мрежата, които обикновено са малки и не изискват
+голям изчислителен ресурс.
+
+
+Квантуване е процес на промяна на домейна на модела на невронната мрежа от
+плаваща запетая към целочислен модел. Мрежите от тип NNUE са проектирани, така че
+да използват пълният капацитет на процесора. Използването на плаваща запетая не е
+вариант за постигане на максимална сила на игра, тъй като то жертва твърде много
+скорост срещу незначителни печалби в точността. Квантуването внася грешка, която се
+натрупва толкова повече, колкото по-дълбока е мрежата. В случая на NNUE мрежите
+обаче, които са сравнително плитки, тази грешка е пренебрежимо малка. Тъй като целта
+е възползването от модерните централни процесори, които позволяват извършването на
+целочислена аритметика с ниска точност паралелно с 8, 16, 32 или дори 64 8-битови
+целочислени стойности едновременно, се стремим да използваме възможно най-малкия
+целочислен тип данни навсякъде, където е възможно, за да обработваме повече
+стойности наведнъж.[19]
+
+
+В това ридми няма да описвам подобрно нещата за архитектурата и по какъв начин точко се квантуват теглата и отместранията.
+
+На следната картинка е представена как изглежда архитектурата на невронна мрежа, която ипозлвам.
+
+![halfkp](1024px-StockfishNNUELayers.png)
+
+
 ### Hybrid Evaluation Logic
 To ensure the engine maintains both the strategic intuition of a neural network and the rock-solid material counting of a classical evaluator, a **Hybrid** approach is used. 
 
@@ -442,6 +519,13 @@ Speciffictly, one of the use cases is checking the cycle repetition. Previous po
 Representation of the board is really compact, because it is represented as 64-bit unsigned ints and that allows storing a large numbers of hashes of the boards.
 
 It is also used for their speed, because updating them is xor-ing the previous position and xor-ing the new position with the current hash, instead of recomputing the board all the time.
+
+When the score written in enty exits the alpha-beta window, the function `read_hash_entry` return the limit values (alpha or beta) becase the exast score is irrelevant if the nieather of players will choose it. 
+
+If the hash entry has some value that is in alpha beta window, and has labeled flag "alpha" for at least that value, or "beta" at most that value, that hash entry isnt veryuseful and can't be used to evaluate the board. Thats why for alpha flag, the alg checks if the score is lower than current alpha, and if the score is higher than current beta, when label for the enty is "alpha" or "beta". The reason for checking is the alpha and beta will get updated if the negamax takes different path for search at the higher livels in the tree.
+
+It is important to mentition when writing the hash entry the exact score must be saved in the table (not relative to the ply), When reading, the ply is added or subracted from the score if it is a mate posistion for the white or black.  
+
 ## 3 fold repetition
 In modern GUIs that supports UCI, when move is repetead 3 times GUI sends signal to stop the game and the oppenent wins.
 

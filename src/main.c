@@ -75,7 +75,7 @@ int main() {
         
         // int pieces[33];
         // int squares[33];
-        // // for(int i = 0; i < 33; i++) {
+        // // for(int i = 0; i < 33; i++) {/bin
         // //     pieces[i] = 0;
         // //     squares[i] = 0;
         // // }
@@ -87,12 +87,15 @@ int main() {
 
         // printf("static eval %d\n", evaluate(board, leaper_masks, slider_masks, eval_masks));
 
-        int score = evaluate(board, leaper_masks, slider_masks, eval_masks);
-        parse_position("position startpos moves e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 d2d4 e5d4 f3d4 f8c5 d4c6 d7c6 e1g1 d8e7 c4f7", board, leaper_masks, slider_masks, search_data, hash_data, repetition_table);
-        score = evaluate(board, leaper_masks, slider_masks, eval_masks);
+        // int score = evaluate(board, leaper_masks, slider_masks, eval_masks);
+        // parse_position("position startpos moves e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 d2d4 e5d4 f3d4 f8c5 d4c6 d7c6 e1g1 d8e7 c4f7", board, leaper_masks, slider_masks, search_data, hash_data, repetition_table);
+        // score = evaluate(board, leaper_masks, slider_masks, eval_masks);
 
         // int move = encode_move(e2, 24, P, 0, 0, 0, 0, 0); // e2e4
 
+        pop_bit(board->pieces[R], h1);
+        print_board(board);
+        // printf("%d\n", (board->pieces[P]));
 
     } else {
         uci_loop(board, leaper_masks, slider_masks, search_data, time_info, hash_data, transposition_table, repetition_table, eval_masks);
