@@ -400,7 +400,7 @@ The network architecture typically consists of:
 
 На следната картинка е представена как изглежда архитектурата на невронна мрежа, която ипозлвам.
 
-![halfkp](1024px-StockfishNNUELayers.png)
+![halfkp](pics/1024px-StockfishNNUELayers.png)
 
 
 ### Hybrid Evaluation Logic
