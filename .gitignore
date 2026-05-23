@@ -1,2 +1,4 @@
 obj/
 .vscode/
+diagrams/
+bin/*_debug

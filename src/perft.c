@@ -37,17 +37,16 @@ void perft_driver(int depth, Board* board, leaper_moves_masks* leaper_masks, sli
 }
 
 void perft_test(int depth, Board* board, leaper_moves_masks* leaper_masks, slider_moves_masks* slider_masks, zoobrist_hash_keys* hash_keys) {
-    printf("\nPerformance test\n\n");
-
     if(depth <= 0) {
-        printf("\nDepth %d\n", 0);
+        // only root node visited
+        printf("\nDepth %d | ", 0);
         printf("Nodes %d", 1);
+        return;
     }
 
     Moves move_list;
     init_move_list(&move_list);
     generate_moves(board, leaper_masks, slider_masks, &move_list);
-
 
     int start_time = get_time_ms();
     for (int i = 0; i < move_list.count; i++) {
@@ -63,13 +62,15 @@ void perft_test(int depth, Board* board, leaper_moves_masks* leaper_masks, slide
         take_back(board); 
         take_back_board_hash_key(hash_keys);
 
-        printf("  move: ");
-        print_move(move_list.moves[i]);
-        printf("  nodes: %ld\n", old_nodes);
-        printf("-------------------------------------------------------------\n");
+        // UNCOMMENT THESE LINES IF YOU WANT TO SEE HOW MANY NODES EACH MOVE HAS CREATED
+        // printf("  move: ");
+        // print_move(move_list.moves[i]);
+        // printf("  nodes: %ld\n", old_nodes);
+        // printf("-------------------------------------------------------------\n");
     }
 
-    printf("\nDepth %d\n", depth);
-    printf("Nodes %ld", nodes);
-    printf("\nTime %d ms\n", get_time_ms() - start_time);
+    printf("\nDepth %d | ", depth);
+    printf("Nodes %ld | ", nodes);
+    printf("Time %d ms", get_time_ms() - start_time);
+    nodes = 0; // reset nodes for the next test
 }
