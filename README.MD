@@ -1,5 +1,7 @@
 # Bitboard Chess Engine
 
+### This project is my theses for my bachelor degree
+
 ## Features
 
 - [**Bitboard Representation**](#bitboards) – Fast move generation and board manipulation using 64-bit integers.  
